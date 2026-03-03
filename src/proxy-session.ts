@@ -355,3 +355,43 @@ export function createProxySession(params: SessionParams): void {
     }
     if (
       options.latencyBudgetMs <= 15 &&
+      entries.length > 1 &&
+      options.enablePassthroughMerge &&
+      entries[0]?.lane !== "priority" &&
+      !entries[0]?.streaming &&
+      !isSafetyForced() &&
+      !hardGuard.isGuarded()
+    ) {
+      const merged = tryMergeJsonRpcBatch(entries.map((x) => x.payload));
+      if (merged) {
+        if (isSocketBackpressured(targetSocket)) {
+          requeueInbound(entries);
+          return;
+        }
+        targetSocket.send(merged, { binary: false });
+        pushOutstanding({ sentAt: now, queueDelayMs, count: entries.length });
+        emit({
+          ts: new Date().toISOString(),
+          sessionId,
+          direction: "agent->server",
+          bytesRaw: entries.reduce((sum, x) => sum + x.payload.length, 0),
+          bytesSent: merged.length,
+          batchedCount: entries.length,
+          compressed: false,
+          delta: false,
+          queueDelayMs,
+          note: "low-latency-jsonrpc-batch",
+        });
+        return;
+      }
+    }
+    const shouldBypass = isSafetyForced() ||
+      hardGuard.isGuarded() ||
+      shouldFavorLatency(queueDelayMs, entries.length) ||
+      (options.autoFallback && controller.shouldBypassBatching());
+    if (entries.length === 1 || shouldBypass) {
+      for (let idx = 0; idx < entries.length; idx += 1) {
+        if (isSocketBackpressured(targetSocket)) {
+          requeueInbound(entries.slice(idx));
+          return;
+        }
