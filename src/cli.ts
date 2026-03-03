@@ -755,3 +755,42 @@ program
   }) => {
     await runBenchCi({
       outDir: opts.outDir,
+      profiles: opts.profiles,
+      repeats: Number(opts.repeats),
+      seed: Number(opts.seed),
+      baselineReport: opts.baselineReport || undefined,
+      maxP95RegressionPct: Number(opts.maxP95RegressionPct),
+      maxP95RegressionMsFloor: Number(opts.maxP95RegressionMsFloor),
+      maxByteReductionDropPct: Number(opts.maxByteReductionDropPct),
+      failOnRegression: opts.failOnRegression,
+    });
+  });
+
+program
+  .command("stats")
+  .option("--state-dir <path>", "directory for metrics + traces", path.resolve(process.cwd(), ".velocity"))
+  .option("--json", "emit machine-readable stats json", false)
+  .option("--verbose", "include recent trace files and extra diagnostics", false)
+  .option("--watch", "refresh continuously in terminal view", false)
+  .option("--interval-ms <number>", "watch refresh interval in milliseconds", "1000")
+  .option("--tenant-limit <number>", "number of tenants to include in tenant breakdown", "10")
+  .action(async (opts: {
+    stateDir: string;
+    json: boolean;
+    verbose: boolean;
+    watch: boolean;
+    intervalMs: string;
+    tenantLimit: string;
+  }) => {
+    const store = new MetricsStore(opts.stateDir);
+    const tenantLimit = Math.max(1, Number(opts.tenantLimit));
+    const render = () =>
+      printStatsWithOptions(store, {
+        json: opts.json,
+        verbose: opts.verbose,
+        tenantLimit,
+      });
+
+    if (!opts.watch) {
+      render();
+      return;
