@@ -78,3 +78,9 @@ export function runBootstrap(options: BootstrapOptions): void {
   ].join("\n");
 
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+  fs.writeFileSync(envPath, `${envExample}\n`, "utf8");
+
+  console.log(`wrote ${configPath}`);
+  console.log(`wrote ${envPath}`);
+  console.log("next: run `npx velocity proxy --target ws://localhost:4000`");
+}

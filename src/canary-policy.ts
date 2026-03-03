@@ -78,3 +78,37 @@ export class CanaryPolicyManager {
     const now = Date.now();
     const state = this.tenants.get(tenantId) ?? {
       safeMode: true,
+      assignedAt: now,
+      sessions: 0,
+      breakerOpens: 0,
+    };
+
+    state.breakerOpens += 1;
+    let demoted = false;
+    if (!state.safeMode) {
+      state.safeMode = true;
+      state.assignedAt = now;
+      state.sessions = 0;
+      state.breakerOpens = 1;
+      delete state.promotedAt;
+      demoted = true;
+    }
+
+    this.tenants.set(tenantId, state);
+    this.persist();
+    return { safeMode: state.safeMode, promoted: false, demoted };
+  }
+
+  private load(): void {
+    if (!this.config.stateFile || !fs.existsSync(this.config.stateFile)) {
+      return;
+    }
+    try {
+      const parsed = JSON.parse(fs.readFileSync(this.config.stateFile, "utf8")) as CanaryStateFile;
+      for (const [tenant, state] of Object.entries(parsed.tenants ?? {})) {
+        this.tenants.set(tenant, state);
+      }
+    } catch {
+      // ignore malformed canary state
+    }
+  }
