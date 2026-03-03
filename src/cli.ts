@@ -278,3 +278,43 @@ program
       negotiationTimeoutMs: Number(opts.negotiationTimeoutMs),
       enablePassthroughMerge: opts.passthroughMerge,
       safeMode: opts.safeMode,
+      breakerThreshold: Number(opts.breakerThreshold),
+      breakerWindowMs: Number(opts.breakerWindowMs),
+      breakerCooldownMs: Number(opts.breakerCooldownMs),
+      rollbackBreachThreshold: Number(opts.rollbackBreachThreshold),
+      rollbackWindowMs: Number(opts.rollbackWindowMs),
+      maxInboundQueue: Number(opts.maxInboundQueue),
+      maxOutstandingBatches: Number(opts.maxOutstandingBatches),
+      maxSocketBackpressureBytes: Number(opts.maxSocketBackpressureBytes),
+      listenerMaxPayloadBytes: Number(opts.listenerMaxPayloadBytes),
+      upstreamHandshakeTimeoutMs: Number(opts.upstreamHandshakeTimeoutMs),
+      upstreamMaxPayloadBytes: Number(opts.upstreamMaxPayloadBytes),
+      upstreamPerMessageDeflate: opts.upstreamPerMessageDeflate,
+      heartbeatIntervalMs: Number(opts.heartbeatIntervalMs),
+      heartbeatTimeoutMs: Number(opts.heartbeatTimeoutMs),
+      logFormat: opts.logFormat,
+      otlpHttpEndpoint: opts.otlpHttpEndpoint || undefined,
+      otlpIntervalMs: Number(opts.otlpIntervalMs),
+      otlpServiceName: opts.otlpServiceName,
+      metricsHost: opts.metricsHost,
+      metricsPort: Number(opts.metricsPort),
+      runtimeControlPlaneEndpoint: opts.runtimeControlPlaneEndpoint || undefined,
+      runtimeControlPlanePollMs: Number(opts.runtimeControlPlanePollMs),
+      policy: opts.opaEndpoint
+        ? {
+          opaEndpoint: opts.opaEndpoint,
+          opaPath: opts.opaPath,
+          timeoutMs: Number(opts.opaTimeoutMs),
+          failOpen: opts.policyFailOpen,
+        }
+        : undefined,
+      rateLimit: opts.rateLimitControlPlaneEndpoint
+        ? {
+          controlPlaneEndpoint: opts.rateLimitControlPlaneEndpoint,
+          timeoutMs: Number(opts.rateLimitTimeoutMs),
+          failOpen: opts.rateLimitFailOpen,
+        }
+        : undefined,
+      authn: opts.jwtJwksUrl
+        ? {
+          required: opts.jwtRequired,
