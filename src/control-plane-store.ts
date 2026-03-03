@@ -158,3 +158,43 @@ export class JsonControlPlaneStore implements ControlPlaneStore {
   async close(): Promise<void> {
     this.closed = true;
     if (this.flushTimer) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
+    if (this.dirty) {
+      await this.flush();
+    } else if (this.flushPromise) {
+      await this.flushPromise;
+    }
+    if (this.persistError) {
+      throw this.persistError;
+    }
+  }
+}
+
+export class SqliteControlPlaneStore implements ControlPlaneStore {
+  private readonly db: any;
+
+  constructor(dbPath: string, db: any) {
+    const absolutePath = path.resolve(dbPath);
+    fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+    this.db = new db.DatabaseSync(absolutePath);
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS tenant_policies (
+        tenant_id TEXT PRIMARY KEY,
+        enabled INTEGER NOT NULL,
+        rate_limit_rps INTEGER NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS rate_limit_buckets (
+        tenant_id TEXT PRIMARY KEY,
+        tokens REAL NOT NULL,
+        last_ms INTEGER NOT NULL
+      );
+    `);
+  }
+
+  static async create(dbPath: string): Promise<SqliteControlPlaneStore> {
+    const sqlite = await import("node:sqlite");
+    return new SqliteControlPlaneStore(dbPath, sqlite);
+  }
