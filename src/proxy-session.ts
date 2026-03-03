@@ -115,3 +115,43 @@ export function createProxySession(params: SessionParams): void {
       if (onSignal) {
         void onSignal(event.signal, event.note);
       }
+      logger.warn("velocity signal", {
+        sessionId,
+        tenantId,
+        direction: event.direction,
+        signal: event.signal,
+        note: event.note,
+      });
+      return;
+    }
+    if (event.note?.startsWith("hard-guard-")) {
+      logger.info("velocity hard guard transition", {
+        sessionId,
+        tenantId,
+        note: event.note,
+        latencyMs: event.latencyMs,
+      });
+    }
+  };
+  const isSafetyForced = (): boolean => forcedPassthrough || safety.isTenantBreakerOpen();
+  const isSocketBackpressured = (socket: ProxySocket): boolean => socket.bufferedAmount >= maxSocketBackpressureBytes;
+  const totalInboundQueued = (): number => priorityQueue.length + normalQueue.length;
+  const totalInboundQueuedBytes = (): number => priorityQueuedBytes + normalQueuedBytes;
+  const classifyInbound = (payload: Buffer): { lane: "priority" | "normal"; streaming: boolean } => {
+    try {
+      const parsed = JSON.parse(payload.toString("utf8")) as { method?: string };
+      const method = typeof parsed?.method === "string" ? parsed.method.toLowerCase() : "";
+      const priority = /cancel|abort|interrupt|stop|final|error/.test(method);
+      const streaming = /stream|token|delta/.test(method);
+      return { lane: priority ? "priority" : "normal", streaming };
+    } catch {
+      return { lane: "normal", streaming: false };
+    }
+  };
+  const compactOutstanding = (): void => {
+    if (outstandingHead > 1024 && outstandingHead * 2 > outstanding.length) {
+      outstanding.splice(0, outstandingHead);
+      outstandingHead = 0;
+    }
+  };
+  const outstandingSize = (): number => outstanding.length - outstandingHead;
