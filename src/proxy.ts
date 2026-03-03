@@ -158,3 +158,43 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
             agentSocket.close(1008, "unauthorized");
             return;
           }
+          identityClaims = identity.claims;
+        } catch (err) {
+          logger.warn("velocity auth rejected session", {
+            tenantId,
+            reason: err instanceof Error ? err.message : String(err),
+          });
+          store.recordSignal("auth-rejected", tenantId);
+          void publishEvent("proxy.auth_rejected", {
+            tenantId,
+            reason: err instanceof Error ? err.message : String(err),
+          });
+          agentSocket.close(1008, "unauthorized");
+          return;
+        }
+      }
+      if (options.authz) {
+        const allowed = await evaluateOpenFgaAccess({
+          options: options.authz,
+          tenantId,
+          claims: identityClaims,
+          logger,
+        });
+        if (!allowed) {
+          logger.warn("velocity authz denied session", { tenantId });
+          store.recordSignal("authz-denied", tenantId);
+          void publishEvent("proxy.authz_denied", { tenantId });
+          agentSocket.close(1008, "forbidden");
+          return;
+        }
+      }
+      if (options.policy) {
+        const decision = await evaluatePolicy({
+          policy: options.policy,
+          tenantId,
+          headers: req.headers,
+          remoteAddress: req.remoteAddress,
+          logger,
+        });
+        if (!decision.allow) {
+          logger.warn("velocity policy denied session", { tenantId });
