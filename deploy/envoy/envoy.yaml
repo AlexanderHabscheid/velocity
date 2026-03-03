@@ -28,3 +28,43 @@ static_resources:
                   - name: envoy.filters.http.jwt_authn
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+                      providers:
+                        velocity_jwt:
+                          issuer: https://auth.example.com/
+                          audiences: ["velocity"]
+                          remote_jwks:
+                            http_uri:
+                              uri: https://auth.example.com/.well-known/jwks.json
+                              cluster: jwks_cluster
+                              timeout: 2s
+                            cache_duration:
+                              seconds: 300
+                      rules:
+                        - match:
+                            prefix: "/"
+                          requires:
+                            provider_name: velocity_jwt
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  clusters:
+    - name: velocity_proxy
+      connect_timeout: 2s
+      type: strict_dns
+      load_assignment:
+        cluster_name: velocity_proxy
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: velocity-proxy
+                      port_value: 4100
+    - name: jwks_cluster
+      connect_timeout: 2s
+      type: LOGICAL_DNS
+      load_assignment:
+        cluster_name: jwks_cluster
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
