@@ -124,3 +124,43 @@ components:
         updatedAt:
           type: string
           format: date-time
+      required: [tenantId, enabled, rateLimitRps, updatedAt]
+    TenantPolicyUpdate:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        rateLimitRps:
+          type: integer
+          minimum: 1
+    TenantRateLimitCheckRequest:
+      type: object
+      properties:
+        rateLimitRps:
+          type: integer
+          minimum: 1
+    TenantRateLimitCheckResponse:
+      type: object
+      properties:
+        allow:
+          type: boolean
+        remainingTokens:
+          type: number
+        updatedAt:
+          type: string
+          format: date-time
+      required: [allow, remainingTokens, updatedAt]
+    RuntimeProfile:
+      type: object
+      properties:
+        batchWindowMs:
+          type: integer
+          minimum: 0
+        minBatchWindowMs:
+          type: integer
+          minimum: 0
+        maxBatchWindowMs:
+          type: integer
+          minimum: 0
+        latencyBudgetMs:
+          type: integer
