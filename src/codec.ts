@@ -106,3 +106,43 @@ export class VelocityCodec {
       return;
     }
 
+    try {
+      const maybe = (await import("zstd-wasm")) as unknown as ZstdFns;
+      if (typeof maybe.init === "function") {
+        await maybe.init();
+      }
+      this.zstd = maybe;
+    } catch {
+      this.zstd = null;
+    }
+  }
+
+  async serialize(
+    envelope: VelocityEnvelope,
+    options?: { allowCompression?: boolean },
+  ): Promise<SerializedFrame> {
+    const packed = Buffer.from(encode(envelope));
+    const output = options?.allowCompression === false
+      ? { buffer: Buffer.concat([Buffer.from([0]), packed]), compressed: false }
+      : await this.maybeCompress(packed, envelope.kind);
+    return {
+      buffer: output.buffer,
+      compressed: output.compressed,
+      kind: envelope.kind,
+    };
+  }
+
+  async parse(frame: Buffer): Promise<{ envelope: VelocityEnvelope; compressed: boolean } | null> {
+    if (frame.length < 2 || frame.length > MAX_FRAME_BYTES) {
+      return null;
+    }
+
+    const flags = frame[0];
+    const body = frame.subarray(1);
+    const compressed = (flags & FLAG_COMPRESSED) !== 0;
+    const decoded = compressed ? await this.maybeDecompress(body) : body;
+    if (decoded.length > MAX_FRAME_BYTES) {
+      return null;
+    }
+    try {
+      const envelope = decode(decoded) as VelocityEnvelope;
