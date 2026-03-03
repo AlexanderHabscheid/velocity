@@ -38,3 +38,43 @@ class RuntimeProfile:
 
 class VelocityControlClient:
     def __init__(self, base_url: str) -> None:
+        self.base_url = base_url.rstrip("/")
+
+    def healthz(self) -> dict:
+        return self._request("/healthz", method="GET")
+
+    def get_tenant_policy(self, tenant_id: str) -> TenantPolicy:
+        tenant = urllib.parse.quote(tenant_id, safe="")
+        raw = self._request(f"/v1/tenants/{tenant}/policy", method="GET")
+        return TenantPolicy(
+            tenant_id=raw["tenantId"],
+            enabled=raw["enabled"],
+            rate_limit_rps=raw["rateLimitRps"],
+            updated_at=raw["updatedAt"],
+        )
+
+    def put_tenant_policy(
+        self,
+        tenant_id: str,
+        enabled: Optional[bool] = None,
+        rate_limit_rps: Optional[int] = None,
+    ) -> TenantPolicy:
+        tenant = urllib.parse.quote(tenant_id, safe="")
+        payload = {}
+        if enabled is not None:
+            payload["enabled"] = enabled
+        if rate_limit_rps is not None:
+            payload["rateLimitRps"] = rate_limit_rps
+        raw = self._request(
+            f"/v1/tenants/{tenant}/policy",
+            method="PUT",
+            body=payload,
+        )
+        return TenantPolicy(
+            tenant_id=raw["tenantId"],
+            enabled=raw["enabled"],
+            rate_limit_rps=raw["rateLimitRps"],
+            updated_at=raw["updatedAt"],
+        )
+
+    def check_tenant_rate_limit(
