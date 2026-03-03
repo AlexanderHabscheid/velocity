@@ -216,3 +216,43 @@ export class SqliteControlPlaneStore implements ControlPlaneStore {
       rateLimitRps: row.rate_limit_rps,
       updatedAt: row.updated_at,
     };
+  }
+
+  async putTenantPolicy(tenantId: string, update: { enabled?: boolean; rateLimitRps?: number }): Promise<TenantPolicy> {
+    const current = await this.getTenantPolicy(tenantId);
+    const next: TenantPolicy = {
+      tenantId,
+      enabled: update.enabled !== undefined ? update.enabled : current.enabled,
+      rateLimitRps: typeof update.rateLimitRps === "number" ? Math.max(1, Math.floor(update.rateLimitRps)) : current.rateLimitRps,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.db.prepare(`
+      INSERT INTO tenant_policies (tenant_id, enabled, rate_limit_rps, updated_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(tenant_id) DO UPDATE SET
+        enabled=excluded.enabled,
+        rate_limit_rps=excluded.rate_limit_rps,
+        updated_at=excluded.updated_at
+    `).run(next.tenantId, next.enabled ? 1 : 0, next.rateLimitRps, next.updatedAt);
+
+    return next;
+  }
+
+  async checkRateLimit(tenantId: string, rateLimitRps?: number): Promise<RateLimitDecision> {
+    const policy = await this.getTenantPolicy(tenantId);
+    const perSecond = Math.max(1, Math.floor(rateLimitRps ?? policy.rateLimitRps));
+    const nowMs = Date.now();
+
+    const row = this.db.prepare(`
+      SELECT tokens, last_ms
+      FROM rate_limit_buckets
+      WHERE tenant_id = ?
+    `).get(tenantId) as { tokens: number; last_ms: number } | undefined;
+
+    const currentTokens = row ? row.tokens : perSecond;
+    const currentLastMs = row ? row.last_ms : nowMs;
+    const decision = computeDecision(currentTokens, currentLastMs, perSecond, nowMs);
+
+    this.db.prepare(`
+      INSERT INTO rate_limit_buckets (tenant_id, tokens, last_ms)
