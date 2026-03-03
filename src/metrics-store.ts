@@ -151,3 +151,43 @@ export class MetricsStore {
       this.metrics.latencyMsTotal += event.latencyMs;
       perTenant.latencyMsTotal += event.latencyMs;
       this.metrics.latencyMsP95Window.push(event.latencyMs);
+      this.recordLatencyHistogram(event.latencyMs);
+      if (this.metrics.latencyMsP95Window.length > 5000) {
+        this.metrics.latencyMsP95Window.splice(0, this.metrics.latencyMsP95Window.length - 5000);
+      }
+    }
+    if (event.queueDelayMs > 0) {
+      this.metrics.queueDelaySamples += 1;
+      this.metrics.queueDelayMsTotal += event.queueDelayMs;
+      this.metrics.queueDelayMsP95Window.push(event.queueDelayMs);
+      perTenant.queueDelaySamples += 1;
+      perTenant.queueDelayMsTotal += event.queueDelayMs;
+      if (this.metrics.queueDelayMsP95Window.length > 5000) {
+        this.metrics.queueDelayMsP95Window.splice(0, this.metrics.queueDelayMsP95Window.length - 5000);
+      }
+    }
+    if (typeof event.loopTurnMs === "number") {
+      this.metrics.loopTurnSamples += 1;
+      this.metrics.loopTurnMsTotal += event.loopTurnMs;
+      perTenant.loopTurnSamples += 1;
+      perTenant.loopTurnMsTotal += event.loopTurnMs;
+    }
+    if (typeof event.toolRoundtripMs === "number") {
+      this.metrics.toolRoundtripSamples += 1;
+      this.metrics.toolRoundtripMsTotal += event.toolRoundtripMs;
+      perTenant.toolRoundtripSamples += 1;
+      perTenant.toolRoundtripMsTotal += event.toolRoundtripMs;
+    }
+    if (typeof event.framesPerTurn === "number") {
+      this.metrics.framesPerTurnSamples += 1;
+      this.metrics.framesPerTurnTotal += event.framesPerTurn;
+      perTenant.framesPerTurnSamples += 1;
+      perTenant.framesPerTurnTotal += event.framesPerTurn;
+    }
+    if (event.signal) {
+      this.recordSignal(event.signal, tenant);
+    }
+    this.metrics.updatedAt = new Date().toISOString();
+    this.metricsDirty = true;
+  }
+
