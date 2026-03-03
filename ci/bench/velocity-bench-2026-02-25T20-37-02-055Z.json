@@ -2260,3 +2260,42 @@
           30,
           30,
           30,
+          30,
+          30,
+          30,
+          30,
+          30
+        ],
+        "logicalBytesSent": 547390,
+        "logicalBytesReceived": 565501,
+        "elapsedMs": 64
+      },
+      "frameReductionPct": 96.20758483033931,
+      "byteReductionPct": -0.09441008306991643,
+      "p95DeltaMs": 6,
+      "avgDeltaMs": 4.265999999999998,
+      "p95DeltaPct": 24,
+      "avgDeltaPct": 18.700683850604936,
+      "pass": true,
+      "stateDir": "/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-regional-3d760b2f-ac3a-4df6-9fe2-136214f64927-h27Jf5,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-regional-d92cc9fc-1044-46c5-981d-dfdfb19a1bab-E68MnM,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-regional-b894740b-6975-46e0-be10-1891ae9e7761-WO943t,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-regional-d5174da8-d39d-4855-8978-d1ad0741a2cf-inOk8I,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-regional-dfa225d7-2826-4749-9e75-583143b2448a-GroKIb"
+    },
+    {
+      "profile": {
+        "name": "mobile-edge",
+        "messages": 350,
+        "burst": 24,
+        "payloadBytes": 1536,
+        "batchWindowMs": 5,
+        "minBatchWindowMs": 1,
+        "maxBatchWindowMs": 12,
+        "latencyBudgetMs": 120,
+        "serverDelayMs": 80,
+        "jitterMs": 12,
+        "maxP95DeltaMs": 12,
+        "maxAvgDeltaMs": 10,
+        "minFrameReductionPct": 20
+      },
+      "direct": {
+        "latencies": [
+          81,
+          83,
