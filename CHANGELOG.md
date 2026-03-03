@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2026-03-03
+
+### Changed
+- Node users can consume the control-plane SDK from the main package via `@velocityai/velocity/control-plane-sdk`.
+- Release workflow now publishes a single npm package (`@velocityai/velocity`) instead of requiring a separate TS SDK package install.
+- Added first-team onboarding guide: `docs/first-15-minutes.md`.
+
 ## [0.1.2] - 2026-03-03
 
 ### Changed

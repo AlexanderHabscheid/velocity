@@ -1,8 +1,14 @@
 {
   "name": "@velocityai/velocity",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "WebSocket multiplexer and batching proxy for agent loops",
   "type": "commonjs",
+  "exports": {
+    "./control-plane-sdk": {
+      "types": "./dist/control-plane-sdk.d.ts",
+      "default": "./dist/control-plane-sdk.js"
+    }
+  },
   "files": [
     "dist/",
     "README.md",
