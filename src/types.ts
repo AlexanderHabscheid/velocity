@@ -1,0 +1,40 @@
+export type Direction = "agent->server" | "server->agent";
+
+export interface ProxyOptions {
+  target: string;
+  targetPool?: {
+    targets: string[];
+    ewmaAlpha: number;
+    ejectFailures: number;
+    ejectMs: number;
+    probeIntervalMs: number;
+    probeTimeoutMs: number;
+    initialLatencyMs: number;
+    connectionPenaltyMs: number;
+    failurePenaltyMs: number;
+    unhealthyPenaltyMs: number;
+  };
+  listenHost: string;
+  listenPort: number;
+  listenerEngine?: "ws" | "uwebsockets";
+  listenerMaxPayloadBytes?: number;
+  ingressH2H3Pilot: boolean;
+  batchWindowMs: number;
+  batchMaxMessages: number;
+  batchMaxBytes: number;
+  minBatchWindowMs: number;
+  maxBatchWindowMs: number;
+  latencyBudgetMs: number;
+  enableZstd: boolean;
+  zstdMinBytes: number;
+  zstdMinGainRatio: number;
+  enableZstdDictionary: boolean;
+  zstdDictionaryBase64?: string;
+  zstdDictionaryMinBytes: number;
+  enableProtobuf: boolean;
+  enableDelta: boolean;
+  structuredDeltaTypes: string[];
+  autoFallback: boolean;
+  enableNegotiation: boolean;
+  negotiationTimeoutMs: number;
+  enablePassthroughMerge: boolean;
