@@ -85,3 +85,34 @@ async function withUwsEchoServer(port, fn) {
 
   try {
     return await fn(`ws://127.0.0.1:${port}`);
+  } finally {
+    app.close();
+  }
+}
+
+async function main() {
+  const messages = Number(process.env.BAKEOFF_MESSAGES ?? '800');
+  const payloadBytes = Number(process.env.BAKEOFF_PAYLOAD_BYTES ?? '512');
+  const wsPort = await openPort();
+  const uwsPort = await openPort();
+
+  const wsResult = await withWsEchoServer(wsPort, (url) => runWsRoundtrip(url, messages, payloadBytes));
+  const uwsResult = await withUwsEchoServer(uwsPort, (url) => runWsRoundtrip(url, messages, payloadBytes));
+
+  console.log('Transport bakeoff (roundtrip echo):');
+  console.log(`- ws: avg=${wsResult.avgMs.toFixed(3)}ms p95=${wsResult.p95Ms.toFixed(3)}ms messages=${messages}`);
+  if (!uwsResult) {
+    console.log('- uWebSockets.js: SKIPPED (dependency unavailable)');
+    process.exit(0);
+  }
+  console.log(`- uWebSockets.js: avg=${uwsResult.avgMs.toFixed(3)}ms p95=${uwsResult.p95Ms.toFixed(3)}ms messages=${messages}`);
+
+  const avgDelta = wsResult.avgMs - uwsResult.avgMs;
+  const p95Delta = wsResult.p95Ms - uwsResult.p95Ms;
+  console.log(`- delta (ws - uws): avg=${avgDelta.toFixed(3)}ms p95=${p95Delta.toFixed(3)}ms`);
+}
+
+main().catch((err) => {
+  console.error(err instanceof Error ? err.message : String(err));
+  process.exit(1);
+});

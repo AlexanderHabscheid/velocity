@@ -109,3 +109,10 @@ class VelocityControlClient:
             enable_zstd=raw["enableZstd"],
             enable_delta=raw["enableDelta"],
             safe_mode=raw["safeMode"],
+            enable_passthrough_merge=raw["enablePassthroughMerge"],
+            updated_at=raw["updatedAt"],
+        )
+
+    def put_runtime_profile(
+        self,
+        batch_window_ms: Optional[int] = None,

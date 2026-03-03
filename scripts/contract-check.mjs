@@ -98,3 +98,5 @@ if (failures.length > 0) {
   }
   process.exit(1);
 }
+
+console.log(`contract check passed (${operationIds.size} operationIds)`);
