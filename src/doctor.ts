@@ -38,3 +38,43 @@ export function runDoctor(options: DoctorOptions = {}): DoctorSummary {
   checks.push({
     name: "npm-cli",
     ok: npmCli.ok,
+    detail: npmCli.ok ? npmCli.stdout.trim() : npmCli.stderr.trim() || "npm unavailable",
+  });
+
+  const stateDir = path.resolve(process.cwd(), ".velocity");
+  let writable = false;
+  try {
+    fs.mkdirSync(stateDir, { recursive: true });
+    const probe = path.join(stateDir, ".doctor-write-probe");
+    fs.writeFileSync(probe, "ok\n", "utf8");
+    fs.unlinkSync(probe);
+    writable = true;
+  } catch {
+    writable = false;
+  }
+  checks.push({
+    name: "state-dir",
+    ok: writable,
+    detail: writable ? `${stateDir} writable` : `${stateDir} is not writable`,
+  });
+
+  checks.push({
+    name: "listener-engine-uws",
+    ok: runCmd("node", ["-e", "import('uWebSockets.js').then(()=>process.exit(0)).catch(()=>process.exit(1))"]).ok,
+    detail: "optional (ws engine works without it)",
+    optional: true,
+  });
+
+  if (infra) {
+    const dockerDaemon = runCmd("docker", ["info"]);
+    checks.push({
+      name: "docker-daemon",
+      ok: dockerDaemon.ok,
+      detail: dockerDaemon.ok ? "reachable" : dockerDaemon.stderr.trim() || "daemon unavailable",
+    });
+
+    const kubectlCli = runCmd("kubectl", ["version", "--client=true", "--output=yaml"]);
+    checks.push({
+      name: "kubectl-cli",
+      ok: kubectlCli.ok,
+      detail: kubectlCli.ok ? "installed" : kubectlCli.stderr.trim() || "kubectl unavailable",
