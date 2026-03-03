@@ -38,3 +38,43 @@ jobs:
           node-version: "22"
           cache: npm
       - name: Install
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Bench CI
+        run: npm run bench:ci
+
+  bench-certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Bench certification
+        run: npm run bench:certify
+
+  package-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Package smoke
+        run: npm run package:smoke
+
