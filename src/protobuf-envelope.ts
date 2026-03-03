@@ -433,3 +433,42 @@ export function decodeVelocityEnvelopeProto(data: Uint8Array): VelocityEnvelope 
   const out: VelocityEnvelope = {
     kind: "single",
     id: "",
+    sentAt: 0,
+    frames: [],
+  };
+  let offset = 0;
+  while (offset < data.length) {
+    const tag = decodeVarint(data, offset);
+    if (!tag) {
+      return null;
+    }
+    offset = tag.next;
+    const field = tag.value >> 3;
+    const wire = tag.value & 0x7;
+    if (field === 1 && wire === WIRE_VARINT) {
+      const v = decodeVarint(data, offset);
+      if (!v) {
+        return null;
+      }
+      out.kind = toKind(v.value);
+      offset = v.next;
+      continue;
+    }
+    if ((field === 2 || field === 5) && wire === WIRE_LEN) {
+      const v = decodeLen(data, offset);
+      if (!v) {
+        return null;
+      }
+      const text = Buffer.from(v.value).toString("utf8");
+      if (field === 2) {
+        out.id = text;
+      } else {
+        out.source = text;
+      }
+      offset = v.next;
+      continue;
+    }
+    if (field === 3 && wire === WIRE_VARINT) {
+      const v = decodeVarint(data, offset);
+      if (!v) {
+        return null;
