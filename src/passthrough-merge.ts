@@ -38,3 +38,10 @@ export function splitJsonRpcBatchResponse(frame: Buffer): Buffer[] | null {
       if (obj.jsonrpc !== "2.0") {
         return null;
       }
+      pieces.push(Buffer.from(JSON.stringify(obj), "utf8"));
+    }
+    return pieces;
+  } catch {
+    return null;
+  }
+}
