@@ -200,3 +200,37 @@ async function runTrial(url: string, profile: BenchProfile): Promise<TrialResult
       if (parsedCount >= profile.messages) {
         resolve();
       }
+    });
+
+    ws.on("error", (err) => reject(err));
+    ws.on("close", () => {
+      if (latencies.length < profile.messages) {
+        reject(new Error("socket closed before all responses arrived"));
+      }
+    });
+  });
+
+  for (let i = 0; i < profile.messages; i += profile.burst) {
+    const end = Math.min(profile.messages, i + profile.burst);
+    for (let id = i; id < end; id += 1) {
+      const body = JSON.stringify({
+        jsonrpc: "2.0",
+        id,
+        method: "tool.call",
+        params: { payload },
+      });
+      sentAt.set(id, Date.now());
+      logicalBytesSent += Buffer.byteLength(body, "utf8");
+      ws.send(body);
+    }
+    await sleep(1);
+  }
+
+  const timeout = new Promise<void>((_, reject) => {
+    setTimeout(() => reject(new Error(`timeout waiting for responses; pending=${sentAt.size}`)), 45000);
+  });
+
+  await Promise.race([done, timeout]);
+  ws.close();
+
+  return {
