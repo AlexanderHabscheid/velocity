@@ -275,3 +275,43 @@ export function createProxySession(params: SessionParams): void {
     if (isSocketBackpressured(targetSocket)) {
       emit({
         ts: new Date().toISOString(),
+        sessionId,
+        direction: "agent->server",
+        bytesRaw: 0,
+        bytesSent: 0,
+        batchedCount: 0,
+        compressed: false,
+        delta: false,
+        queueDelayMs: 0,
+        note: `target-backpressure(buffered=${targetSocket.bufferedAmount})`,
+        signal: "backpressure",
+      });
+      return;
+    }
+    const entries = takeInboundBatch();
+    if (entries.length === 0) {
+      return;
+    }
+    const now = Date.now();
+    const queueDelayMs = entries.reduce((sum, x) => sum + (now - x.enqueuedAt), 0) / entries.length;
+    if (isSafetyForced() && mode !== "passthrough") {
+      setMode("passthrough", forcedPassthrough ? "session-rollback-passthrough" : "tenant-breaker-passthrough");
+    }
+    if (mode === "passthrough" || mode === "unknown") {
+      const guardActive = hardGuard.isGuarded();
+      if (
+        options.enablePassthroughMerge &&
+        !guardActive &&
+        !isSafetyForced() &&
+        entries[0]?.lane !== "priority" &&
+        !entries[0]?.streaming &&
+        !shouldFavorLatency(queueDelayMs, entries.length)
+      ) {
+        const merged = tryMergeJsonRpcBatch(entries.map((x) => x.payload));
+        if (merged) {
+          if (isSocketBackpressured(targetSocket)) {
+            requeueInbound(entries);
+            return;
+          }
+          targetSocket.send(merged, { binary: false });
+          pushOutstanding({ sentAt: now, queueDelayMs, count: entries.length });
