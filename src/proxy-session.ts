@@ -621,3 +621,42 @@ export function createProxySession(params: SessionParams): void {
               ts: new Date().toISOString(),
               sessionId,
               direction: "agent->server",
+              bytesRaw: 0,
+              bytesSent: 0,
+              batchedCount: 0,
+              compressed: false,
+              delta: false,
+              queueDelayMs: 0,
+              note: `tenant-breaker-open(tenant=${tenantId},until=${breaker.openUntil})`,
+              signal: "tenant-breaker-open",
+            });
+          }
+          const rb = rollback.recordGuardBreach();
+          if (rb.rollback) {
+            forcedPassthrough = true;
+            emit({
+              ts: new Date().toISOString(),
+              sessionId,
+              direction: "agent->server",
+              bytesRaw: 0,
+              bytesSent: 0,
+              batchedCount: 0,
+              compressed: false,
+              delta: false,
+              queueDelayMs: 0,
+              note: "session-rollback-triggered",
+              signal: "session-rollback",
+            });
+            setMode("passthrough", "session-rollback-hard-guard");
+          }
+        }
+      }
+    }
+    const parsed = isBinary ? await codec.parse(outgoing).catch(() => null) : null;
+    if (mode === "unknown") {
+      if (parsed && parsed.envelope.kind === "control") {
+        if (localControlIds.has(parsed.envelope.id)) {
+          return;
+        }
+        if (isControlHello(parsed.envelope)) {
+          const ack = buildHello(localCaps, true, parsed.envelope.id);
