@@ -122,3 +122,43 @@ export function printStatsWithOptions(store: MetricsStore, options: PrintStatsOp
         loopTurnSamples: m.loopTurnSamples,
       },
       safetyEvents: {
+        queueOverflow: m.queueOverflowEvents,
+        backpressure: m.backpressureEvents,
+        tenantBreakerOpen: m.tenantBreakerOpenEvents,
+        sessionRollback: m.sessionRollbackEvents,
+      },
+      denyEvents: {
+        policy: m.policyDeniedEvents,
+        rateLimit: m.rateLimitDeniedEvents,
+        auth: m.authRejectedEvents,
+        authz: m.authzDeniedEvents,
+      },
+      healthPenalty,
+      tenants: topTenants,
+    };
+    console.log(JSON.stringify(payload, null, 2));
+    return;
+  }
+
+  console.log("VELOCITY stats");
+  console.log(`updated: ${m.updatedAt}`);
+  console.log("");
+  console.log("throughput:");
+  console.log(`frames raw: ${m.totalFramesRaw}`);
+  console.log(`frames sent: ${m.totalFramesSent}`);
+  console.log(`frames reduced: ${frameSavings} (${pct(frameSavings, m.totalFramesRaw)})`);
+  console.log(`bytes raw: ${m.totalBytesRaw}`);
+  console.log(`bytes sent: ${m.totalBytesSent}`);
+  console.log(`byte savings: ${byteSavings} (${pct(byteSavings, m.totalBytesRaw)})`);
+  console.log(`batched frames: ${m.totalBatches} (members: ${m.totalBatchMembers})`);
+  console.log(`compressed frames: ${m.totalCompressedFrames}`);
+  console.log(`delta frames: ${m.totalDeltaFrames}`);
+  console.log("");
+  console.log("latency:");
+  console.log(`samples: ${m.latencySamples}`);
+  console.log(`avg: ${avgLatency.toFixed(2)}ms`);
+  console.log(`p95: ${p95.toFixed(2)}ms`);
+  console.log("");
+  console.log("agent loop kpis:");
+  console.log(`loop turn avg: ${avgLoopTurnMs.toFixed(2)}ms (${m.loopTurnSamples} samples)`);
+  console.log(`tool roundtrip avg: ${avgToolRoundtripMs.toFixed(2)}ms`);
