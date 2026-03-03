@@ -716,3 +716,42 @@ program
   }) => {
     await runBench({
       messages: Number(opts.messages),
+      burst: Number(opts.burst),
+      payloadBytes: Number(opts.payloadBytes),
+      batchWindowMs: Number(opts.batchWindowMs),
+      minBatchWindowMs: Number(opts.minBatchWindowMs),
+      maxBatchWindowMs: Number(opts.maxBatchWindowMs),
+      latencyBudgetMs: Number(opts.latencyBudgetMs),
+      serverDelayMs: Number(opts.serverDelayMs),
+      jitterMs: Number(opts.jitterMs),
+      maxP95DeltaMs: Number(opts.maxP95DeltaMs),
+      maxAvgDeltaMs: Number(opts.maxAvgDeltaMs),
+      minFrameReductionPct: Number(opts.minFrameReductionPct),
+      minByteReductionPct: Number(opts.minByteReductionPct),
+    });
+  });
+
+program
+  .command("bench-ci")
+  .option("--out-dir <path>", "report output directory", path.resolve(process.cwd(), ".velocity/bench-reports"))
+  .option("--profiles <list>", "comma-separated profiles or all", "all")
+  .option("--repeats <number>", "runs per profile for median aggregation", "3")
+  .option("--seed <number>", "base seed for deterministic benchmark jitter", "42")
+  .option("--baseline-report <path>", "optional prior bench report for certification-style regression checks")
+  .option("--max-p95-regression-pct <number>", "allowed p95-delta regression vs baseline report", "10")
+  .option("--max-p95-regression-ms-floor <number>", "minimum absolute p95-delta slack (ms) vs baseline report", "2")
+  .option("--max-byte-reduction-drop-pct <number>", "allowed byte-reduction drop vs baseline report", "5")
+  .option("--fail-on-regression", "exit non-zero when latency/throughput regression gates fail", false)
+  .action(async (opts: {
+    outDir: string;
+    profiles: string;
+    repeats: string;
+    seed: string;
+    baselineReport?: string;
+    maxP95RegressionPct: string;
+    maxP95RegressionMsFloor: string;
+    maxByteReductionDropPct: string;
+    failOnRegression: boolean;
+  }) => {
+    await runBenchCi({
+      outDir: opts.outDir,
