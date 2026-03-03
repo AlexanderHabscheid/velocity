@@ -117,3 +117,27 @@ export async function handleVelocityDownstreamFrames(ctx: VelocityFrameContext):
           latencyMs,
           note: "delta-only",
         });
+        lastServerText = text;
+        continue;
+      }
+      lastServerText = text;
+    }
+
+    agentSocket.send(item, { binary: true });
+    emit({
+      ts: new Date().toISOString(),
+      sessionId,
+      direction: "server->agent",
+      bytesRaw: item.length,
+      bytesSent: item.length,
+      batchedCount: 1,
+      compressed: parsedCompressed,
+      delta: false,
+      queueDelayMs: 0,
+      latencyMs,
+      note: `demux@${adaptiveWindowMs}ms`,
+    });
+  }
+
+  return lastServerText;
+}

@@ -99,3 +99,19 @@ export function createProxySession(params: SessionParams): void {
   let tornDown = false;
   let upstreamReleased = false;
   let upstreamOpened = false;
+  let lastServerText = "";
+  let helloId: string | null = null;
+  const localControlIds = new Set<string>();
+  let forcedPassthrough = false;
+  const heartbeatIntervalMs = Math.max(0, options.heartbeatIntervalMs ?? 25000);
+  const heartbeatTimeoutMs = Math.max(1000, options.heartbeatTimeoutMs ?? 10000);
+  let lastAgentPongAt = Date.now();
+  let lastTargetPongAt = Date.now();
+  const emit = (event: FrameRecord): void => {
+    const withTenant: FrameRecord = { ...event, tenantId };
+    store.record(withTenant);
+    store.appendTrace(sessionId, withTenant);
+    if (event.signal) {
+      if (onSignal) {
+        void onSignal(event.signal, event.note);
+      }
