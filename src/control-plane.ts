@@ -81,3 +81,43 @@ export function startControlPlaneWithOptions(options: ControlPlaneOptions): Prom
       enablePassthroughMerge: true,
       updatedAt: new Date().toISOString(),
     };
+    const publishEvent = async (topic: string, payload: Record<string, unknown>): Promise<void> => {
+      try {
+        await eventBus.publish(topic, payload);
+      } catch (err) {
+        console.warn(`velocity control-plane event publish failed topic=${topic} error=${err instanceof Error ? err.message : String(err)}`);
+      }
+    };
+    return new Promise((resolve, reject) => {
+      const server = http.createServer(async (req, res) => {
+        const url = new URL(req.url ?? "/", "http://velocity.local");
+        if (req.method === "GET" && url.pathname === "/healthz") {
+          writeJson(res, 200, { ok: true, now: new Date().toISOString(), storeEngine: options.storeEngine });
+          return;
+        }
+        if (url.pathname === "/v1/runtime/profile") {
+          if (req.method === "GET") {
+            writeJson(res, 200, runtimeProfile);
+            return;
+          }
+          if (req.method !== "PUT") {
+            writeJson(res, 405, { error: "method_not_allowed" });
+            return;
+          }
+          try {
+            const payload = await readJson(req) as Partial<RuntimeProfile>;
+            const next: RuntimeProfile = {
+              ...runtimeProfile,
+              ...payload,
+              updatedAt: new Date().toISOString(),
+            };
+            if (next.batchWindowMs < 0 || next.minBatchWindowMs < 0 || next.maxBatchWindowMs < 0) {
+              writeJson(res, 400, { error: "invalid_window" });
+              return;
+            }
+            if (next.maxBatchWindowMs < next.minBatchWindowMs) {
+              writeJson(res, 400, { error: "invalid_window_range" });
+              return;
+            }
+            if (next.batchMaxMessages < 1 || next.batchMaxBytes < 1 || next.latencyBudgetMs < 1) {
+              writeJson(res, 400, { error: "invalid_runtime_profile" });
