@@ -2,3 +2,43 @@ name: velocity-protocol-resilience
 
 on:
   push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  autobahn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Autobahn testsuite
+        run: pip install autobahntestsuite
+
+      - name: Start target
+        run: node scripts/autobahn-target.mjs &
+
+      - name: Run Autobahn fuzzing client
+        run: wstest -m fuzzingclient -s ci/autobahn/fuzzingclient.json
+
+      - name: Upload Autobahn report
+        if: always()
+        uses: actions/upload-artifact@v4
