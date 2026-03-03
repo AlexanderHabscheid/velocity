@@ -345,3 +345,37 @@ export async function runProfile(profile: BenchProfile, runSeed = 1): Promise<Be
     });
   }
 
+  if (!direct || !proxied) {
+    throw new Error(`profile did not complete: ${profile.name}`);
+  }
+
+  const directP95 = percentile(direct.latencies, 0.95);
+  const proxiedP95 = percentile(proxied.latencies, 0.95);
+  const directAvg = average(direct.latencies);
+  const proxiedAvg = average(proxied.latencies);
+  const reductions = loadOutboundReduction(path.join(stateDir, "traces"));
+  const frameReductionPct = reductions.frameReductionPct;
+  const byteReductionPct = reductions.byteReductionPct;
+  const p95DeltaMs = proxiedP95 - directP95;
+  const avgDeltaMs = proxiedAvg - directAvg;
+  const p95DeltaPct = directP95 > 0 ? (p95DeltaMs / directP95) * 100 : 0;
+  const avgDeltaPct = directAvg > 0 ? (avgDeltaMs / directAvg) * 100 : 0;
+  const pass = p95DeltaMs <= profile.maxP95DeltaMs &&
+    avgDeltaMs <= profile.maxAvgDeltaMs &&
+    frameReductionPct >= profile.minFrameReductionPct &&
+    byteReductionPct >= profile.minByteReductionPct;
+
+  return {
+    profile,
+    direct,
+    proxied,
+    frameReductionPct,
+    byteReductionPct,
+    p95DeltaMs,
+    avgDeltaMs,
+    p95DeltaPct,
+    avgDeltaPct,
+    pass,
+    stateDir,
+  };
+}
