@@ -38,3 +38,5 @@ export function aggregateProfileRuns(profile: BenchProfile, runs: BenchProfileRe
     avgDeltaPct,
     pass,
     stateDir: runs.map((x) => x.stateDir).join(","),
+  };
+}

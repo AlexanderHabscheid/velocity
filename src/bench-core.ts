@@ -38,3 +38,41 @@ export interface BenchProfileResult {
   proxied: TrialResult;
   frameReductionPct: number;
   byteReductionPct: number;
+  p95DeltaMs: number;
+  avgDeltaMs: number;
+  p95DeltaPct: number;
+  avgDeltaPct: number;
+  pass: boolean;
+  stateDir: string;
+}
+
+export interface BenchReport {
+  generatedAt: string;
+  results: BenchProfileResult[];
+  passCount: number;
+  failCount: number;
+}
+
+export const DEFAULT_CI_PROFILES: BenchProfile[] = [
+  {
+    name: "low-latency-lan",
+    messages: 600,
+    burst: 12,
+    payloadBytes: 512,
+    batchWindowMs: 1,
+    minBatchWindowMs: 0,
+    maxBatchWindowMs: 4,
+    latencyBudgetMs: 12,
+    serverDelayMs: 2,
+    jitterMs: 1,
+    maxP95DeltaMs: 10,
+    maxAvgDeltaMs: 6,
+    minFrameReductionPct: -1,
+    minByteReductionPct: 90,
+  },
+  {
+    name: "regional",
+    messages: 500,
+    burst: 20,
+    payloadBytes: 1024,
+    batchWindowMs: 3,
