@@ -146,3 +146,21 @@ export class VelocityCodec {
     }
     try {
       const envelope = decode(decoded) as VelocityEnvelope;
+      if (!isValidEnvelope(envelope)) {
+        return null;
+      }
+      return { envelope, compressed };
+    } catch {
+      return null;
+    }
+  }
+
+  private async maybeCompress(
+    data: Buffer,
+    kind: VelocityEnvelope["kind"],
+  ): Promise<{ buffer: Buffer; compressed: boolean }> {
+    if (data.length < this.zstdMinBytes || kind === "control") {
+      return { buffer: Buffer.concat([Buffer.from([0]), data]), compressed: false };
+    }
+    if (!this.zstd?.compress) {
+      return { buffer: Buffer.concat([Buffer.from([0]), data]), compressed: false };

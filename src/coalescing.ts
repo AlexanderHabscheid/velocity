@@ -158,3 +158,25 @@ export class SemanticCoalescer {
       this.signatureToPrimary.delete(pending.signature);
     }
     const out = [Buffer.from(JSON.stringify(response), "utf8")];
+    for (const dupId of pending.duplicateIds) {
+      const clone = { ...response, id: dupId };
+      out.push(Buffer.from(JSON.stringify(clone), "utf8"));
+    }
+    return out;
+  }
+
+  private trimIfNeeded(): void {
+    if (this.primaryById.size <= this.maxPending) {
+      return;
+    }
+    const first = this.primaryById.entries().next().value as [string, PendingCoalescedRequest] | undefined;
+    if (!first) {
+      return;
+    }
+    const [firstKey, firstPending] = first;
+    this.primaryById.delete(firstKey);
+    if (this.signatureToPrimary.get(firstPending.signature) === firstKey) {
+      this.signatureToPrimary.delete(firstPending.signature);
+    }
+  }
+}
