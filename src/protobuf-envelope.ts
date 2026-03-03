@@ -151,3 +151,43 @@ function decodeCapabilities(data: Uint8Array): NonNullable<VelocityEnvelope["con
       } else if (field === 5) {
         out.batching = bool;
       } else if (field === 6) {
+        out.adaptiveBatching = bool;
+      }
+      offset = v.next;
+      continue;
+    }
+    if ((field === 7 || field === 8) && wire === WIRE_VARINT) {
+      const v = decodeVarint(data, offset);
+      if (!v) {
+        return null;
+      }
+      if (field === 7) {
+        out.latencyBudgetMs = v.value;
+      } else {
+        out.batchWindowMs = v.value;
+      }
+      offset = v.next;
+      continue;
+    }
+    if ((field === 9 || field === 10) && wire === WIRE_VARINT) {
+      const v = decodeVarint(data, offset);
+      if (!v) {
+        return null;
+      }
+      if (field === 9) {
+        out.zstdDictionary = v.value !== 0;
+      } else {
+        out.protobuf = v.value !== 0;
+      }
+      offset = v.next;
+      continue;
+    }
+    const skipped = skipField(data, wire, offset);
+    if (skipped === null) {
+      return null;
+    }
+    offset = skipped;
+  }
+  return out;
+}
+
