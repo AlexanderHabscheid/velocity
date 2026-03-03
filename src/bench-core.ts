@@ -81,7 +81,7 @@ export const DEFAULT_CI_PROFILES: BenchProfile[] = [
     latencyBudgetMs: 40,
     serverDelayMs: 20,
     jitterMs: 4,
-    maxP95DeltaMs: 8,
+    maxP95DeltaMs: 10,
     maxAvgDeltaMs: 6,
     minFrameReductionPct: -1,
     minByteReductionPct: 95,

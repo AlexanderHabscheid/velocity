@@ -19,21 +19,25 @@ function run(cmd, args, cwd, env = process.env) {
 
 function main() {
   const root = process.cwd();
+  const pkgJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+  const packageName = String(pkgJson.name);
+  const expectedVersion = String(pkgJson.version);
+  const tarballPrefix = packageName.replace(/^@/, "").replace(/\//g, "-");
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "velocity-package-smoke-"));
   const installDir = path.join(temp, "install");
   fs.mkdirSync(installDir, { recursive: true });
 
   try {
     run("npm", ["pack", "--pack-destination", temp], root);
-    const tgz = fs.readdirSync(temp).find((name) => /^velocity-.*\.tgz$/.test(name));
+    const tgz = fs.readdirSync(temp).find((name) => name.startsWith(`${tarballPrefix}-`) && name.endsWith(".tgz"));
     if (!tgz) {
-      throw new Error("npm pack did not produce a velocity tarball");
+      throw new Error(`npm pack did not produce expected tarball prefix: ${tarballPrefix}`);
     }
     const tarballPath = path.join(temp, tgz);
     run("npm", ["init", "-y"], installDir);
     run("npm", ["install", tarballPath], installDir);
     const version = run("npx", ["velocity", "--version"], installDir);
-    if (version !== "0.1.0") {
+    if (version !== expectedVersion) {
       throw new Error(`unexpected installed CLI version: ${version}`);
     }
     run("npx", ["velocity", "doctor"], installDir);

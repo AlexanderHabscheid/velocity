@@ -6,15 +6,15 @@ It is package-first and terminal-first: there is no built-in web dashboard UI.
 ## Quickstart (Package-first)
 
 ```bash
-npx velocity proxy --target ws://localhost:4000
-npx velocity doctor
-npx velocity bootstrap
+npx @velocityai/velocity proxy --target ws://localhost:4000
+npx @velocityai/velocity doctor
+npx @velocityai/velocity bootstrap
 ```
 
 Or install globally:
 
 ```bash
-npm install -g velocity
+npm install -g @velocityai/velocity
 velocity proxy --target ws://localhost:4000
 velocity doctor
 velocity bootstrap
@@ -226,7 +226,7 @@ This check verifies operation coverage across:
 
 ## SDK packaging
 
-- TypeScript SDK package: `sdk/typescript/package.json` (`@velocity-ai/control-plane-sdk`)
+- TypeScript SDK package: `sdk/typescript/package.json` (`@velocityai/control-plane-sdk`)
 - Python SDK package: `sdk/python/pyproject.toml` (`velocity-control-sdk`)
 - Python CLI entrypoint: `velocity-control`
 
