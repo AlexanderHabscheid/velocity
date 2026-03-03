@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: velocity-nats
+  namespace: velocity
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: velocity-nats
+  template:
+    metadata:
+      labels:
+        app: velocity-nats
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: nats
+          image: nats:2.11-alpine
+          args: ["-js"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - containerPort: 4222
+            - containerPort: 8222
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
