@@ -164,3 +164,43 @@ components:
           minimum: 0
         latencyBudgetMs:
           type: integer
+          minimum: 1
+        batchMaxMessages:
+          type: integer
+          minimum: 1
+        batchMaxBytes:
+          type: integer
+          minimum: 1
+        enableZstd:
+          type: boolean
+        enableDelta:
+          type: boolean
+        safeMode:
+          type: boolean
+        enablePassthroughMerge:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        [batchWindowMs, minBatchWindowMs, maxBatchWindowMs, latencyBudgetMs, batchMaxMessages, batchMaxBytes, enableZstd, enableDelta, safeMode, enablePassthroughMerge, updatedAt]
+    RuntimeProfileUpdate:
+      type: object
+      properties:
+        batchWindowMs:
+          type: integer
+          minimum: 0
+        minBatchWindowMs:
+          type: integer
+          minimum: 0
+        maxBatchWindowMs:
+          type: integer
+          minimum: 0
+        latencyBudgetMs:
+          type: integer
+          minimum: 1
+        batchMaxMessages:
+          type: integer
+          minimum: 1
+        batchMaxBytes:
+          type: integer
