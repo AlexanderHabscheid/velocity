@@ -404,3 +404,42 @@ program
   .option("--otlp-service-name <name>", "OTLP service.name value", "velocity-proxy")
   .option("--metrics-host <host>", "metrics endpoint bind host", "127.0.0.1")
   .option("--metrics-port <number>", "metrics endpoint port (0 disables)", "0")
+  .option("--state-dir <path>", "directory for metrics + traces", path.resolve(process.cwd(), ".velocity"))
+  .option("--runtime-control-plane-endpoint <url>", "optional control-plane endpoint for hot runtime tuning", "")
+  .option("--runtime-control-plane-poll-ms <number>", "runtime tuning poll interval in milliseconds", "5000")
+  .option("--opa-endpoint <url>", "OPA base URL for tenant policy checks", "")
+  .option("--opa-path <path>", "OPA data path, e.g. velocity/allow", "velocity/allow")
+  .option("--opa-timeout-ms <number>", "OPA request timeout in milliseconds", "250")
+  .option("--policy-fail-open", "allow traffic when OPA check fails", false)
+  .option("--rate-limit-control-plane-endpoint <url>", "optional control-plane endpoint for distributed rate-limit checks", "")
+  .option("--rate-limit-timeout-ms <number>", "distributed rate-limit timeout in milliseconds", "250")
+  .option("--rate-limit-fail-open", "allow traffic when distributed rate-limit backend is unavailable", false)
+  .option("--jwt-required", "require Authorization: Bearer token", false)
+  .option("--jwt-jwks-url <url>", "JWKS URL for JWT verification", "")
+  .option("--jwt-issuer <issuer>", "required JWT issuer", "")
+  .option("--jwt-audience <audience>", "required JWT audience", "")
+  .option("--openfga-endpoint <url>", "optional OpenFGA API base URL", "")
+  .option("--openfga-store-id <id>", "OpenFGA store ID", "")
+  .option("--openfga-model-id <id>", "OpenFGA authorization model ID", "")
+  .option("--openfga-relation <relation>", "OpenFGA relation to check", "connect")
+  .option("--openfga-object-prefix <prefix>", "OpenFGA object prefix", "tenant:")
+  .option("--openfga-user-claim <claim>", "JWT claim name to map to OpenFGA user", "sub")
+  .option("--openfga-fail-open", "allow traffic when OpenFGA check errors", false)
+  .option("--openfga-token <token>", "optional OpenFGA API bearer token", "")
+  .option("--openfga-timeout-ms <number>", "OpenFGA check timeout in milliseconds", "250")
+  .option("--nats-url <url>", "optional NATS URL for runtime event publishing", "")
+  .option("--event-subject-prefix <prefix>", "NATS subject prefix for runtime events", "velocity.events")
+  .action(async (opts: {
+    target: string;
+    host: string;
+    port: string;
+    listenerEngine: "ws" | "uwebsockets";
+    ingressH2H3Pilot: boolean;
+    batchWindowMs: string;
+    batchMaxMessages: string;
+    batchMaxBytes: string;
+    minBatchWindowMs: string;
+    maxBatchWindowMs: string;
+    latencyBudgetMs: string;
+    zstd: boolean;
+    zstdMinBytes: string;
