@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2026-03-03
+
+### Changed
+- Release-only version bump for npm/PyPI/container republish after scope permission fix.
+
 ## [0.1.1] - 2026-03-03
 
 ### Changed
