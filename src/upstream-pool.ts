@@ -38,3 +38,43 @@ export class UpstreamPool {
     for (const target of options.targets) {
       this.states.set(target, {
         url: target,
+        activeConnections: 0,
+        ewmaLatencyMs: null,
+        consecutiveFailures: 0,
+        ejectedUntilMs: 0,
+        healthy: true,
+        lastSuccessAtMs: null,
+        lastFailureAtMs: null,
+      });
+    }
+  }
+
+  start(): void {
+    if (this.options.probeIntervalMs <= 0 || this.states.size <= 1) {
+      return;
+    }
+    this.probeTimer = setInterval(() => {
+      if (this.closed) {
+        return;
+      }
+      for (const target of this.states.keys()) {
+        void this.probeTarget(target);
+      }
+    }, this.options.probeIntervalMs);
+    this.probeTimer.unref();
+  }
+
+  close(): void {
+    this.closed = true;
+    if (this.probeTimer) {
+      clearInterval(this.probeTimer);
+      this.probeTimer = null;
+    }
+  }
+
+  acquireTarget(): string | null {
+    const now = Date.now();
+    const candidates = [...this.states.values()].filter((state) => state.ejectedUntilMs <= now);
+    if (candidates.length === 0) {
+      return null;
+    }
