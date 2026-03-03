@@ -794,3 +794,42 @@ program
     if (!opts.watch) {
       render();
       return;
+    }
+    if (opts.json) {
+      throw new Error("--watch is not compatible with --json");
+    }
+
+    const intervalMs = Math.max(250, Number(opts.intervalMs));
+    let stop = false;
+    const onSignal = () => {
+      stop = true;
+    };
+    process.on("SIGINT", onSignal);
+    process.on("SIGTERM", onSignal);
+
+    try {
+      while (!stop) {
+        process.stdout.write("\x1bc");
+        render();
+        console.log("");
+        console.log(`watching... refresh=${intervalMs}ms (Ctrl+C to exit)`);
+        await sleep(intervalMs);
+      }
+    } finally {
+      process.off("SIGINT", onSignal);
+      process.off("SIGTERM", onSignal);
+    }
+  });
+
+program
+  .command("replay")
+  .argument("<trace>", "trace file path")
+  .action((trace: string) => {
+    replayTrace(trace);
+  });
+
+program.parseAsync(process.argv).catch((err: unknown) => {
+  const msg = err instanceof Error ? err.message : String(err);
+  console.error(`velocity failed: ${msg}`);
+  process.exitCode = 1;
+});
