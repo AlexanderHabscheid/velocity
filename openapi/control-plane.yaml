@@ -121,3 +121,6 @@ components:
         rateLimitRps:
           type: integer
           minimum: 1
+        updatedAt:
+          type: string
+          format: date-time
