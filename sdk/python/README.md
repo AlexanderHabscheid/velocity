@@ -1,7 +1,7 @@
 # Velocity Control Plane SDK (Python)
 
 ```bash
-pip install velocity-control-sdk
+pip install velocityai-cli
 ```
 
 ```python
