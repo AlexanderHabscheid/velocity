@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.1] - 2026-03-03
+
+### Changed
+- Set npm `NPM_TOKEN` expectations to automation-friendly usage (`bypass_2fa=true`) for CI publish compatibility.
+- Renamed Python package distribution to `velocityai-cli` for PyPI.
+- Bumped CLI, TypeScript SDK, and Python package versions to `0.1.1` for a clean re-release.
+
 ## [0.1.0] - 2026-03-02
 
 ### Added

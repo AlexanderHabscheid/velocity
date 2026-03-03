@@ -1,6 +1,6 @@
 {
   "name": "@velocityai/velocity",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "WebSocket multiplexer and batching proxy for agent loops",
   "type": "commonjs",
   "files": [
