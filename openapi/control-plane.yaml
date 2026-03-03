@@ -41,3 +41,43 @@ paths:
         required: true
         content:
           application/json:
+            schema:
+              $ref: '#/components/schemas/RuntimeProfileUpdate'
+      responses:
+        '200':
+          description: Runtime profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuntimeProfile'
+  /v1/tenants/{tenantId}/policy:
+    get:
+      operationId: getTenantPolicy
+      parameters:
+        - in: path
+          name: tenantId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tenant policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantPolicy'
+    put:
+      operationId: putTenantPolicy
+      parameters:
+        - in: path
+          name: tenantId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantPolicyUpdate'
+      responses:
