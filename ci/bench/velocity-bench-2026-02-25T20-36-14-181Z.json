@@ -3014,3 +3014,11 @@
       "p95DeltaMs": 11,
       "avgDeltaMs": 8.497142857142862,
       "p95DeltaPct": 11.827956989247312,
+      "avgDeltaPct": 9.741876310272543,
+      "pass": true,
+      "stateDir": "/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-mobile-edge-47cd563b-34f3-4e6b-9f6d-e2da6beda642-hjz9Ko,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-mobile-edge-d44fad8d-e963-4849-8f81-6520029ad0b0-yjtsll,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-mobile-edge-ad847761-809f-4e24-9aca-84344235afea-N919JM,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-mobile-edge-30baa473-e68f-45e6-9148-a552386037f6-od6bku,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-mobile-edge-6e0f1f54-376c-40ed-927f-25da617f319a-hjdAdK"
+    }
+  ],
+  "passCount": 2,
+  "failCount": 1
+}

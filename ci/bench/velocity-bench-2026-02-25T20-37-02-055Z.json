@@ -3001,3 +3001,24 @@
           95,
           95,
           95,
+          95,
+          95,
+          95
+        ],
+        "logicalBytesSent": 562340,
+        "logicalBytesReceived": 575051,
+        "elapsedMs": 113
+      },
+      "frameReductionPct": 96.86609686609687,
+      "byteReductionPct": -0.06381530180727067,
+      "p95DeltaMs": 8,
+      "avgDeltaMs": 6.6485714285714295,
+      "p95DeltaPct": 8.695652173913043,
+      "avgDeltaPct": 7.660905349794239,
+      "pass": true,
+      "stateDir": "/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-mobile-edge-0c2bdba8-d58d-4998-a02e-07c7a265bebd-7Z7LHd,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-mobile-edge-b3491a7c-a9cc-4d9c-ba35-323891061c3f-RLgURD,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-mobile-edge-955ca27c-fa61-4351-aa6a-d8c659c9ad28-KonlNI,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-mobile-edge-ada39bd3-d4d2-413c-9b39-47ffbed6d7bc-IjopkP,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-mobile-edge-3ceda438-0c2b-4983-9c36-06fe29ffb979-nrYOfY"
+    }
+  ],
+  "passCount": 3,
+  "failCount": 0
+}
