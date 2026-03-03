@@ -304,3 +304,25 @@ export class MetricsStore {
             this.metricsDirty = true;
           }
           for (const trace of traces) {
+            const current = this.traceBuffers.get(trace.sessionId) ?? [];
+            current.unshift(trace.data);
+            this.traceBuffers.set(trace.sessionId, current);
+          }
+          console.error(`velocity metrics flush failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+    } finally {
+      this.flushing = false;
+    }
+  }
+
+  listTraces(): string[] {
+    if (!fs.existsSync(this.traceRoot)) {
+      return [];
+    }
+    return fs.readdirSync(this.traceRoot)
+      .filter((name) => name.endsWith(".jsonl"))
+      .map((name) => path.join(this.traceRoot, name))
+      .sort();
+  }
+}

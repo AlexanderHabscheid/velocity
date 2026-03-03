@@ -336,3 +336,19 @@ export class ValkeyRateLimitStore implements ControlPlaneStore {
       },
     ) as [number | string, string];
 
+    const allow = Number(evalResult[0]) === 1;
+    const remaining = Number(evalResult[1]);
+    return {
+      allow,
+      remainingTokens: Number.isFinite(remaining) ? Number(remaining.toFixed(3)) : 0,
+      updatedAt: new Date(nowMs).toISOString(),
+    };
+  }
+
+  async close(): Promise<void> {
+    await this.base.close?.();
+    if (this.client?.isOpen) {
+      await this.client.quit();
+    }
+  }
+}

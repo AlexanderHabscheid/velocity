@@ -351,3 +351,5 @@ function decodeDeltaPatch(data: Uint8Array): NonNullable<VelocityEnvelope["delta
           const str = Buffer.from(val.value).toString("utf8");
           if (innerField === 1) {
             entryKey = str;
+          } else {
+            try {
