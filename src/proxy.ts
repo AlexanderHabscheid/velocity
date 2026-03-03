@@ -238,3 +238,43 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
         options: {
           ...options,
           batchWindowMs: runtime?.batchWindowMs ?? options.batchWindowMs,
+          minBatchWindowMs: runtime?.minBatchWindowMs ?? options.minBatchWindowMs,
+          maxBatchWindowMs: runtime?.maxBatchWindowMs ?? options.maxBatchWindowMs,
+          latencyBudgetMs: runtime?.latencyBudgetMs ?? options.latencyBudgetMs,
+          batchMaxMessages: runtime?.batchMaxMessages ?? options.batchMaxMessages,
+          batchMaxBytes: runtime?.batchMaxBytes ?? options.batchMaxBytes,
+          safeMode: resolvedSafeMode,
+          enableZstd: (runtime?.enableZstd ?? options.enableZstd) && !resolvedSafeMode,
+          enableDelta: (runtime?.enableDelta ?? options.enableDelta) && !resolvedSafeMode,
+          enablePassthroughMerge: (runtime?.enablePassthroughMerge ?? options.enablePassthroughMerge) && !resolvedSafeMode,
+        },
+        localCaps,
+        logger,
+        safety: {
+          isTenantBreakerOpen: () => breakers.isOpen(tenantId),
+          recordTenantBreach: () => {
+            const result = breakers.recordBreach(tenantId);
+            if (result.opened && canary) {
+              const demotion = canary.recordBreakerOpen(tenantId);
+              if (demotion.demoted) {
+                logger.warn("velocity canary demoted tenant", { tenantId });
+              }
+            }
+            return result;
+          },
+        },
+        onSignal: (signal, note) =>
+          publishEvent("proxy.signal", {
+            tenantId,
+            signal,
+            note,
+          }),
+        upstreamObserver: upstreamPool
+          ? {
+            onOpen: () => upstreamPool.recordSuccess(selectedTarget),
+            onClose: () => upstreamPool.releaseTarget(selectedTarget),
+            onError: (reason) => upstreamPool.recordFailure(selectedTarget, reason),
+            onLatency: (latencyMs) => upstreamPool.recordLatency(selectedTarget, latencyMs),
+          }
+          : undefined,
+      });
