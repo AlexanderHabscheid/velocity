@@ -8,3 +8,7 @@
     "acme": {
       "enabled": true,
       "rateLimitRps": 80,
+      "apiKeys": ["acme-prod-key"]
+    }
+  }
+}

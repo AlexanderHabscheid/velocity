@@ -38,3 +38,6 @@ paths:
     put:
       operationId: putRuntimeProfile
       requestBody:
+        required: true
+        content:
+          application/json:

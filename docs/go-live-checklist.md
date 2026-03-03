@@ -38,3 +38,19 @@ This checklist is the deployment gate for turning Velocity into a usable, instal
 
 ## SDK publish readiness
 
+- [ ] TypeScript SDK builds (`sdk/typescript`)
+- [ ] Python SDK builds (`sdk/python`)
+- [ ] Control-plane OpenAPI matches SDK operations (`npm run contract:check`)
+
+## Release workflow readiness
+
+- [ ] `.github/workflows/required-gate.yml` includes package smoke validation
+- [ ] `.github/workflows/release.yml` verify job runs `npm run release:verify`
+- [ ] Secrets exist for npm (`NPM_TOKEN`) and PyPI (`PYPI_API_TOKEN`)
+
+## Post-deploy validation
+
+- [ ] Run live canary (`velocity canary`) against representative tenants
+- [ ] Confirm no sustained p95 regression versus direct path
+- [ ] Confirm tenant policy/rate-limit decisions are observable in logs and metrics
+
