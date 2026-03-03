@@ -38,3 +38,43 @@ metadata:
 spec:
   replicas: 1
   selector:
+    matchLabels:
+      app: velocity-opa
+  template:
+    metadata:
+      labels:
+        app: velocity-opa
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: opa
+          image: openpolicyagent/opa:0.68.0-static
+          args: ["run", "--server", "--addr", ":8181", "/policy/policy.rego", "/policy/data.json"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - containerPort: 8181
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8181
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8181
+            initialDelaySeconds: 8
