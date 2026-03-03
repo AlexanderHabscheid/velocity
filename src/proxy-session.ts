@@ -195,3 +195,43 @@ export function createProxySession(params: SessionParams): void {
       } else {
         normalQueue.unshift(entry);
         normalQueuedBytes += entry.payload.length;
+      }
+    }
+  };
+  const takeInboundBatch = (): PendingInbound[] => {
+    if (priorityQueue.length > 0) {
+      const entry = priorityQueue.shift() as PendingInbound;
+      priorityQueuedBytes = Math.max(0, priorityQueuedBytes - entry.payload.length);
+      return [entry];
+    }
+    if (normalQueue.length === 0) {
+      return [];
+    }
+    if (normalQueue[0].streaming) {
+      const entry = normalQueue.shift() as PendingInbound;
+      normalQueuedBytes = Math.max(0, normalQueuedBytes - entry.payload.length);
+      return [entry];
+    }
+    const maxMessages = Math.max(1, options.batchMaxMessages);
+    const maxBytes = Math.max(1, options.batchMaxBytes);
+    let bytes = 0;
+    let count = 0;
+    for (let idx = 0; idx < normalQueue.length && count < maxMessages; idx += 1) {
+      if (normalQueue[idx].streaming && count > 0) {
+        break;
+      }
+      const size = normalQueue[idx].payload.length;
+      if (count > 0 && bytes + size > maxBytes) {
+        break;
+      }
+      bytes += size;
+      count += 1;
+    }
+    if (count <= 0) {
+      count = 1;
+      bytes = normalQueue[0].payload.length;
+    }
+    const entries = normalQueue.splice(0, count);
+    normalQueuedBytes = Math.max(0, normalQueuedBytes - bytes);
+    return entries;
+  };
