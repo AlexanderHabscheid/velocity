@@ -318,3 +318,33 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
   });
   if (metricsExporter) {
     logger.info("velocity metrics exporter enabled", {
+      url: `http://${options.metricsHost ?? "127.0.0.1"}:${options.metricsPort}/metrics`,
+    });
+  }
+  if (otlpExporter) {
+    logger.info("velocity otlp exporter enabled", {
+      endpoint: options.otlpHttpEndpoint,
+      intervalMs: options.otlpIntervalMs,
+      serviceName: options.otlpServiceName,
+    });
+  }
+
+  return {
+    close: async () =>
+      new Promise<void>((resolve, reject) => {
+        clearInterval(flushInterval);
+        if (runtimePollTimer) {
+          clearInterval(runtimePollTimer);
+          runtimePollTimer = null;
+        }
+        Promise.all([
+          listener.close(),
+          metricsExporter ? metricsExporter.close() : Promise.resolve(),
+          otlpExporter ? otlpExporter.close() : Promise.resolve(),
+          eventBus.close(),
+          Promise.resolve(upstreamPool?.close()),
+          store.close(),
+        ]).then(() => resolve()).catch(reject);
+      }),
+  };
+}
