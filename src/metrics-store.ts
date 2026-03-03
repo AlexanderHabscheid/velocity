@@ -62,3 +62,43 @@ const EMPTY_TENANT_METRICS: TenantAggregateMetrics = {
   authzDeniedEvents: 0,
 };
 
+export class MetricsStore {
+  private readonly root: string;
+  private readonly metricsFile: string;
+  private readonly traceRoot: string;
+  private metrics: AggregateMetrics;
+  private metricsDirty = false;
+  private readonly traceBuffers = new Map<string, string[]>();
+  private flushing = false;
+  private flushQueued = false;
+  private closePromise: Promise<void> | null = null;
+
+  constructor(root = path.resolve(process.cwd(), ".velocity")) {
+    this.root = root;
+    this.metricsFile = path.join(this.root, "metrics.json");
+    this.traceRoot = path.join(this.root, "traces");
+    fs.mkdirSync(this.traceRoot, { recursive: true });
+    this.metrics = this.readMetricsFile();
+  }
+
+  private readMetricsFile(): AggregateMetrics {
+    if (!fs.existsSync(this.metricsFile)) {
+      return { ...DEFAULT_METRICS };
+    }
+
+    try {
+      const parsed = JSON.parse(fs.readFileSync(this.metricsFile, "utf8")) as AggregateMetrics;
+      return { ...DEFAULT_METRICS, ...parsed };
+    } catch {
+      return { ...DEFAULT_METRICS };
+    }
+  }
+
+  getTracePath(sessionId: string): string {
+    return path.join(this.traceRoot, `${sessionId}.jsonl`);
+  }
+
+  load(): AggregateMetrics {
+    return {
+      ...this.metrics,
+      latencyMsP95Window: [...this.metrics.latencyMsP95Window],
