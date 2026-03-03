@@ -738,3 +738,42 @@ export function createProxySession(params: SessionParams): void {
       lastServerText,
       now,
       adaptiveWindowMs: controller.snapshot().windowMs,
+    });
+  });
+  const teardown = (): void => {
+    if (tornDown) {
+      return;
+    }
+    tornDown = true;
+    if (!upstreamReleased) {
+      upstreamReleased = true;
+      upstreamObserver?.onClose?.();
+    }
+    if (flushTimer) {
+      clearTimeout(flushTimer);
+      flushTimer = null;
+    }
+    if (negotiationTimer) {
+      clearTimeout(negotiationTimer);
+      negotiationTimer = null;
+    }
+    if (heartbeatTimer) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    }
+    store.flush();
+    if (agentSocket.readyState === SOCKET_STATE.OPEN) {
+      agentSocket.close();
+    }
+    if (targetSocket.readyState === SOCKET_STATE.OPEN || targetSocket.readyState === SOCKET_STATE.CONNECTING) {
+      targetSocket.close();
+    }
+    coalescer.clear();
+  };
+  const startHeartbeat = (): void => {
+    if (heartbeatIntervalMs <= 0) {
+      return;
+    }
+    heartbeatTimer = setInterval(() => {
+      if (tornDown) {
+        return;
