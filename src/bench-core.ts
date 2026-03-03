@@ -234,3 +234,34 @@ async function runTrial(url: string, profile: BenchProfile): Promise<TrialResult
   ws.close();
 
   return {
+    latencies,
+    logicalBytesSent,
+    logicalBytesReceived,
+    elapsedMs: Date.now() - started,
+  };
+}
+
+export async function runProfile(profile: BenchProfile, runSeed = 1): Promise<BenchProfileResult> {
+  const serverPort = await getOpenPort();
+  const proxyPort = await getOpenPort();
+  const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), `velocity-bench-${profile.name}-${randomUUID()}-`));
+
+  const rng = createRng(hashSeed(`${profile.name}:${runSeed}`));
+  const echoServer = new WebSocketServer({ host: "127.0.0.1", port: serverPort });
+  echoServer.on("connection", (socket) => {
+    socket.on("message", (data, isBinary) => {
+      const jitter = profile.jitterMs > 0 ? Math.floor(rng() * (profile.jitterMs + 1)) : 0;
+      const delay = profile.serverDelayMs + jitter;
+      setTimeout(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          const raw = Buffer.isBuffer(data) ? data.toString("utf8") : String(data);
+          try {
+            const parsed = JSON.parse(raw) as unknown;
+            if (Array.isArray(parsed)) {
+              const responses = parsed.map((item) => ({
+                jsonrpc: "2.0",
+                id: (item as { id?: unknown }).id,
+                result: item,
+              }));
+              socket.send(JSON.stringify(responses), { binary: false });
+              return;
