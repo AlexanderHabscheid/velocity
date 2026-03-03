@@ -435,3 +435,42 @@ export function createProxySession(params: SessionParams): void {
       source: "velocity",
     };
     const encoded = await codec.serialize(envelope, { allowCompression: options.enableZstd });
+    if (isSocketBackpressured(targetSocket)) {
+      requeueInbound(entries);
+      return;
+    }
+    targetSocket.send(encoded.buffer, { binary: true });
+    pushOutstanding({ sentAt: now, queueDelayMs, count: entries.length });
+    emit({
+      ts: new Date().toISOString(),
+      sessionId,
+      direction: "agent->server",
+      bytesRaw: entries.reduce((sum, x) => sum + x.payload.length, 0),
+      bytesSent: encoded.buffer.length,
+      batchedCount: entries.length,
+      compressed: encoded.compressed,
+      delta: false,
+      queueDelayMs,
+      note: `batch@${controller.currentWindowMs()}ms`,
+    });
+  };
+  const scheduleFlush = (overrideWaitMs?: number): void => {
+    const waitMs = Math.max(
+      0,
+      typeof overrideWaitMs === "number"
+        ? overrideWaitMs
+        : mode === "velocity" && !hardGuard.isGuarded() && !isSafetyForced()
+        ? controller.currentWindowMs()
+        : 0,
+    );
+    if (flushTimer) {
+      if (waitMs > 0) {
+        return;
+      }
+      clearTimeout(flushTimer);
+      flushTimer = null;
+    }
+    flushTimer = setTimeout(async () => {
+      flushTimer = null;
+      await flushBatch();
+      if (totalInboundQueued() > 0 && targetSocket.readyState === SOCKET_STATE.OPEN) {
