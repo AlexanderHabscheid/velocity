@@ -38,3 +38,43 @@ export function runBootstrap(options: BootstrapOptions): void {
       zstdMinBytes: 512,
       zstdMinGainRatio: 0.03,
       delta: true,
+      metricsPort: 9464,
+      stateDir: ".velocity",
+    },
+    controlPlane: {
+      host: "127.0.0.1",
+      port: 4200,
+      storeEngine: "json",
+      stateFile: ".velocity/control-plane-state.json",
+      dbPath: ".velocity/control-plane.db",
+    },
+    policy: {
+      opaEndpoint: "",
+      opaPath: "velocity/allow",
+      opaTimeoutMs: 250,
+    },
+    enterprise: {
+      rateLimitControlPlaneEndpoint: "http://127.0.0.1:4200",
+      jwtJwksUrl: "",
+      jwtIssuer: "",
+      jwtAudience: "",
+      openfgaEndpoint: "",
+      openfgaStoreId: "",
+    },
+  };
+
+  const envExample = [
+    "VELOCITY_TARGET=ws://localhost:4000",
+    "VELOCITY_TARGET_POOL=",
+    "VELOCITY_HOST=127.0.0.1",
+    "VELOCITY_PORT=4100",
+    "VELOCITY_LISTENER_ENGINE=ws",
+    "VELOCITY_METRICS_PORT=9464",
+    "VELOCITY_OPA_ENDPOINT=",
+    "VELOCITY_RATE_LIMIT_CONTROL_PLANE_ENDPOINT=http://127.0.0.1:4200",
+    "VELOCITY_RUNTIME_CONTROL_PLANE_ENDPOINT=http://127.0.0.1:4200",
+    "VELOCITY_JWT_JWKS_URL=",
+    "VELOCITY_OPENFGA_ENDPOINT=",
+  ].join("\n");
+
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
