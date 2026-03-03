@@ -115,3 +115,43 @@ async function startWsListener(options: ListenerOptions): Promise<ListenerHandle
       new Promise<void>((resolve, reject) => {
         for (const client of wss.clients) {
           client.close();
+        }
+        wss.close((err) => (err ? reject(err) : resolve()));
+      }),
+  };
+}
+
+async function startUwsListener(options: ListenerOptions): Promise<ListenerHandle> {
+  let uws: any;
+  try {
+    uws = await import("uWebSockets.js");
+  } catch {
+    options.logger.warn("uWebSockets.js unavailable; falling back to ws engine");
+    return startWsListener(options);
+  }
+
+  const socketMap = new Map<any, UwsSocketAdapter>();
+  const app = uws.default.App();
+
+  function decodeRemoteAddress(raw: unknown): string | undefined {
+    if (!raw) {
+      return undefined;
+    }
+    if (typeof raw === "string") {
+      return raw;
+    }
+    try {
+      return Buffer.from(raw as ArrayBuffer).toString("utf8");
+    } catch {
+      return undefined;
+    }
+  }
+
+  function collectHeaders(req: any): IncomingHttpHeaders {
+    const headers: IncomingHttpHeaders = {};
+    if (typeof req.forEach !== "function") {
+      return headers;
+    }
+    req.forEach((key: string, value: string) => {
+      const normalized = key.toLowerCase();
+      const existing = headers[normalized];
