@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-02-25T20:37:02.055Z",
+  "results": [
+    {
+      "profile": {
+        "name": "low-latency-lan",
+        "messages": 600,
+        "burst": 12,
+        "payloadBytes": 512,
+        "batchWindowMs": 1,
+        "minBatchWindowMs": 0,
+        "maxBatchWindowMs": 4,
+        "latencyBudgetMs": 12,
+        "serverDelayMs": 2,
+        "jitterMs": 1,
+        "maxP95DeltaMs": 10,
+        "maxAvgDeltaMs": 6,
+        "minFrameReductionPct": 10
+      },
+      "direct": {
+        "latencies": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          3,
