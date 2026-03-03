@@ -38,3 +38,16 @@ spec:
               "4200",
               "--store-engine",
               "json",
+              "--state-file",
+              "/var/lib/velocity/control-plane-state.json",
+              "--valkey-url",
+              "redis://velocity-valkey.velocity.svc.cluster.local:6379",
+              "--nats-url",
+              "nats://velocity-nats.velocity.svc.cluster.local:4222"
+            ]
+          ports:
+            - containerPort: 4200
+          volumeMounts:
+            - name: control-plane-state
+              mountPath: /var/lib/velocity
+          resources:

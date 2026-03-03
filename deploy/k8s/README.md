@@ -38,3 +38,30 @@ kubectl apply -f deploy/k8s/pdb.yaml
 ```
 
 ## 5. Verify
+
+```bash
+kubectl -n velocity get pods
+kubectl -n velocity get svc
+```
+
+## Deployment tiers
+
+- `single-node`: run CLI binaries only (`velocity proxy` + `velocity control-plane`).
+- `ha-cluster`: use all manifests in this folder with HPA-enabled proxy plus Valkey/NATS-backed distributed state/events.
+- `enterprise-edge`: front this deployment with Envoy (`deploy/envoy/envoy.yaml`) and enforce JWT/OPA/OpenFGA controls.
+
+## CLI path
+
+```bash
+velocity doctor
+# apply manifests directly after choosing your image tag
+kubectl apply -f deploy/k8s/namespace.yaml
+kubectl apply -f deploy/k8s/network-policy.yaml
+kubectl apply -f deploy/k8s/nats.yaml
+kubectl apply -f deploy/k8s/valkey.yaml
+kubectl apply -f deploy/k8s/opa.yaml
+kubectl apply -f deploy/k8s/otel-collector.yaml
+kubectl apply -f deploy/k8s/control-plane.yaml
+kubectl apply -f deploy/k8s/velocity-proxy.yaml
+kubectl apply -f deploy/k8s/pdb.yaml
+```
