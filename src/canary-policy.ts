@@ -112,3 +112,14 @@ export class CanaryPolicyManager {
       // ignore malformed canary state
     }
   }
+
+  private persist(): void {
+    if (!this.config.stateFile) {
+      return;
+    }
+    const payload: CanaryStateFile = {
+      tenants: Object.fromEntries(this.tenants.entries()),
+    };
+    fs.writeFileSync(this.config.stateFile, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  }
+}
