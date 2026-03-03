@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: velocity-otel-collector
+  namespace: velocity
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch:
+        timeout: 5s
+        send_batch_size: 1024
+    exporters:
+      logging:
+        loglevel: info
+    service:
+      pipelines:
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [logging]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: velocity-otel-collector
+  namespace: velocity
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: velocity-otel-collector
+  template:
+    metadata:
+      labels:
+        app: velocity-otel-collector
