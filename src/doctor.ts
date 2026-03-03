@@ -78,3 +78,22 @@ export function runDoctor(options: DoctorOptions = {}): DoctorSummary {
       name: "kubectl-cli",
       ok: kubectlCli.ok,
       detail: kubectlCli.ok ? "installed" : kubectlCli.stderr.trim() || "kubectl unavailable",
+    });
+
+    const kubectlContext = runCmd("kubectl", ["config", "current-context"]);
+    checks.push({
+      name: "kubectl-context",
+      ok: kubectlContext.ok,
+      detail: kubectlContext.ok ? kubectlContext.stdout.trim() : kubectlContext.stderr.trim() || "no current context",
+    });
+  }
+
+  for (const check of checks) {
+    printCheck(check);
+  }
+
+  return {
+    ok: checks.every((c) => c.ok || c.optional),
+    checks,
+  };
+}

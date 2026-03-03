@@ -54,3 +54,24 @@ class UwsSocketAdapter extends EventEmitter implements ProxySocket {
     this.state = SOCKET_STATE.CLOSING;
     try {
       this.socket.end(code, reason);
+    } catch {
+      // ignore close races
+    }
+  }
+
+  ping(): void {
+    if (this.state !== SOCKET_STATE.OPEN) {
+      return;
+    }
+    try {
+      this.socket.ping();
+    } catch {
+      // ignore ping races
+    }
+  }
+
+  markClosed(): void {
+    if (this.state === SOCKET_STATE.CLOSED) {
+      return;
+    }
+    this.state = SOCKET_STATE.CLOSED;
