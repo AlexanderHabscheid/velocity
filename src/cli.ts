@@ -38,3 +38,43 @@ const PROFILE_OVERRIDES: Record<PerformanceProfile, Record<string, OptionValue>>
     safeMode: false,
   },
 };
+
+function resolvePerformanceProfile(raw: string): PerformanceProfile {
+  if (raw === "low-latency" || raw === "balanced" || raw === "high-throughput") {
+    return raw;
+  }
+  throw new Error(`invalid --performance-profile: ${raw} (expected one of low-latency|balanced|high-throughput)`);
+}
+
+function applyPerformanceProfile(
+  rawOptions: Record<string, OptionValue>,
+  command: Command,
+  profile: PerformanceProfile,
+): void {
+  const overrides = PROFILE_OVERRIDES[profile];
+  for (const [key, value] of Object.entries(overrides)) {
+    if (command.getOptionValueSource(key) === "default") {
+      rawOptions[key] = value;
+    }
+  }
+}
+
+function parseTargetPool(target: string, poolCsv: string): string[] {
+  const extra = poolCsv.split(",").map((x) => x.trim()).filter(Boolean);
+  return [...new Set([target, ...extra])];
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const program = new Command();
+
+program
+  .name("velocity")
+  .description("WebSocket multiplexer and batching layer")
+  .version("0.1.0");
+
+program
+  .command("proxy")
+  .requiredOption("--target <url>", "target WebSocket URL")
