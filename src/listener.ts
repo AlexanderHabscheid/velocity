@@ -155,3 +155,43 @@ async function startUwsListener(options: ListenerOptions): Promise<ListenerHandl
     req.forEach((key: string, value: string) => {
       const normalized = key.toLowerCase();
       const existing = headers[normalized];
+      if (existing === undefined) {
+        headers[normalized] = value;
+        return;
+      }
+      if (Array.isArray(existing)) {
+        existing.push(value);
+        headers[normalized] = existing;
+        return;
+      }
+      headers[normalized] = [existing, value];
+    });
+    return headers;
+  }
+
+  function toRequestContext(rawSocket: any): UwsRequestContext {
+    const userData = typeof rawSocket.getUserData === "function"
+      ? rawSocket.getUserData()
+      : undefined;
+    return (userData?.requestContext as UwsRequestContext | undefined) ?? { url: "/", headers: {} };
+  }
+
+  app.ws("/*", {
+    maxPayloadLength: Math.max(1024, options.maxPayloadBytes ?? 100 * 1024 * 1024),
+    upgrade: (res: any, req: any, context: any) => {
+      const url = typeof req.getUrl === "function" ? req.getUrl() : "/";
+      const query = typeof req.getQuery === "function" ? req.getQuery() : "";
+      const requestContext: UwsRequestContext = {
+        url: query ? `${url}?${query}` : url,
+        headers: collectHeaders(req),
+        remoteAddress: decodeRemoteAddress(
+          typeof res.getRemoteAddressAsText === "function"
+            ? res.getRemoteAddressAsText()
+            : undefined,
+        ),
+      };
+
+      res.upgrade(
+        { requestContext },
+        req.getHeader("sec-websocket-key"),
+        req.getHeader("sec-websocket-protocol"),
