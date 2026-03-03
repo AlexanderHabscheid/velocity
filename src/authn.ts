@@ -38,3 +38,12 @@ export async function authenticateJwt(
   jwksCache.set(options.jwksUrl, jwks);
 
   const verified = await jose.jwtVerify(token, jwks as Parameters<typeof jose.jwtVerify>[1], {
+    issuer: options.issuer,
+    audience: options.audience,
+  });
+
+  return {
+    token,
+    claims: verified.payload as Record<string, unknown>,
+  };
+}

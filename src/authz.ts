@@ -38,3 +38,34 @@ export async function evaluateOpenFgaAccess(params: EvaluateAuthzParams): Promis
     const resp = await fetch(url, {
       method: "POST",
       headers: {
+        "content-type": "application/json",
+        ...(options.token ? { authorization: `Bearer ${options.token}` } : {}),
+      },
+      body: JSON.stringify({
+        tuple_key: {
+          user,
+          relation: options.relation,
+          object,
+        },
+        authorization_model_id: options.modelId,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!resp.ok) {
+      logger.warn("openfga check failed", { status: resp.status, url, tenantId, user });
+      return options.failOpen;
+    }
+
+    const body = await resp.json() as { allowed?: boolean };
+    return body.allowed === true;
+  } catch (err) {
+    logger.warn("openfga check error", {
+      tenantId,
+      user,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return options.failOpen;
+  } finally {
+    clearTimeout(timeout);
+  }
