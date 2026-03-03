@@ -699,3 +699,42 @@ export function createProxySession(params: SessionParams): void {
       for (const response of expanded) {
         handlePassthroughDownstream(
           { sessionId, emit, agentSocket, latencyMs },
+          response,
+          Boolean(isBinary),
+          mode === "passthrough" && options.enablePassthroughMerge,
+        );
+      }
+      return;
+    }
+    if (parsed.envelope.kind === "control") {
+      if (localControlIds.has(parsed.envelope.id)) {
+        return;
+      }
+      if (isControlHello(parsed.envelope)) {
+        const ack = buildHello(localCaps, true, parsed.envelope.id);
+        localControlIds.add(ack.id);
+        const encoded = await codec.serialize(ack, { allowCompression: options.enableZstd });
+        targetSocket.send(encoded.buffer, { binary: true });
+        setMode("velocity", "control-hello-reply");
+      }
+      if (isControlHelloAck(parsed.envelope)) {
+        setMode("velocity", "control-hello-ack");
+      }
+      return;
+    }
+    const expandedFrames = parsed.envelope.frames.flatMap((frame) => coalescer.expandResponse(Buffer.from(frame)));
+    lastServerText = await handleVelocityDownstreamFrames({
+      sessionId,
+      emit,
+      agentSocket,
+      latencyMs,
+      codec,
+      parsedEnvelope: {
+        ...parsed.envelope,
+        frames: expandedFrames.map((x) => new Uint8Array(x)),
+      },
+      parsedCompressed: parsed.compressed,
+      enableDelta: options.enableDelta,
+      lastServerText,
+      now,
+      adaptiveWindowMs: controller.snapshot().windowMs,
