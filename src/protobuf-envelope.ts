@@ -191,3 +191,43 @@ function decodeCapabilities(data: Uint8Array): NonNullable<VelocityEnvelope["con
   return out;
 }
 
+function encodeControl(control: NonNullable<VelocityEnvelope["control"]>): Buffer {
+  const parts: Buffer[] = [];
+  parts.push(writeVarintField(1, control.type === "hello" ? 1 : 2));
+  if (control.ackFor) {
+    parts.push(writeStringField(2, control.ackFor));
+  }
+  parts.push(writeBytesField(3, encodeCapabilities(control.capabilities)));
+  return Buffer.concat(parts);
+}
+
+function decodeControl(data: Uint8Array): NonNullable<VelocityEnvelope["control"]> | null {
+  let type: "hello" | "hello-ack" = "hello";
+  let ackFor: string | undefined;
+  let capabilities: NonNullable<VelocityEnvelope["control"]>["capabilities"] | null = null;
+  let offset = 0;
+  while (offset < data.length) {
+    const tag = decodeVarint(data, offset);
+    if (!tag) {
+      return null;
+    }
+    offset = tag.next;
+    const field = tag.value >> 3;
+    const wire = tag.value & 0x7;
+    if (field === 1 && wire === WIRE_VARINT) {
+      const v = decodeVarint(data, offset);
+      if (!v) {
+        return null;
+      }
+      type = v.value === 2 ? "hello-ack" : "hello";
+      offset = v.next;
+      continue;
+    }
+    if (field === 2 && wire === WIRE_LEN) {
+      const v = decodeLen(data, offset);
+      if (!v) {
+        return null;
+      }
+      ackFor = Buffer.from(v.value).toString("utf8");
+      offset = v.next;
+      continue;
