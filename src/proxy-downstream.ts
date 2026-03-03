@@ -77,3 +77,43 @@ export async function handleVelocityDownstreamFrames(ctx: VelocityFrameContext):
     emit,
     sessionId,
     latencyMs,
+    parsedEnvelope,
+    parsedCompressed,
+    enableDelta,
+    now,
+    adaptiveWindowMs,
+  } = ctx;
+  let lastServerText = ctx.lastServerText;
+
+  if (parsedEnvelope.kind !== "batch" && parsedEnvelope.kind !== "single") {
+    return lastServerText;
+  }
+
+  for (const frame of parsedEnvelope.frames) {
+    const item = Buffer.from(frame);
+    if (enableDelta) {
+      const text = item.toString("utf8");
+      const patch = computeDelta(lastServerText, text);
+      if (lastServerText && shouldUseDelta(lastServerText, text, patch)) {
+        const deltaEnvelope: VelocityEnvelope = {
+          kind: "delta",
+          id: randomUUID(),
+          sentAt: now,
+          frames: [],
+          deltaPatch: patch,
+        };
+        const encodedDelta = await codec.serialize(deltaEnvelope);
+        agentSocket.send(encodedDelta.buffer, { binary: true });
+        emit({
+          ts: new Date().toISOString(),
+          sessionId,
+          direction: "server->agent",
+          bytesRaw: item.length,
+          bytesSent: encodedDelta.buffer.length,
+          batchedCount: 1,
+          compressed: encodedDelta.compressed,
+          delta: true,
+          queueDelayMs: 0,
+          latencyMs,
+          note: "delta-only",
+        });
