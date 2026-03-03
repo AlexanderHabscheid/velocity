@@ -38,3 +38,43 @@ export interface ProxyOptions {
   enableNegotiation: boolean;
   negotiationTimeoutMs: number;
   enablePassthroughMerge: boolean;
+  safeMode: boolean;
+  breakerThreshold: number;
+  breakerWindowMs: number;
+  breakerCooldownMs: number;
+  rollbackBreachThreshold: number;
+  rollbackWindowMs: number;
+  maxInboundQueue: number;
+  maxOutstandingBatches: number;
+  maxSocketBackpressureBytes: number;
+  heartbeatIntervalMs?: number;
+  heartbeatTimeoutMs?: number;
+  upstreamHandshakeTimeoutMs?: number;
+  upstreamMaxPayloadBytes?: number;
+  upstreamPerMessageDeflate?: boolean;
+  logFormat: "text" | "json";
+  otlpHttpEndpoint?: string;
+  otlpIntervalMs: number;
+  otlpServiceName: string;
+  metricsHost?: string;
+  metricsPort?: number;
+  canary?: {
+    percent: number;
+    promotionWindowMs: number;
+    minSessions: number;
+    stateFile?: string;
+  };
+  policy?: {
+    opaEndpoint: string;
+    opaPath: string;
+    timeoutMs: number;
+    failOpen: boolean;
+  };
+  rateLimit?: {
+    controlPlaneEndpoint: string;
+    timeoutMs: number;
+    failOpen: boolean;
+  };
+  authn?: {
+    required: boolean;
+    jwksUrl: string;
