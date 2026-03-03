@@ -155,3 +155,43 @@ export function createProxySession(params: SessionParams): void {
     }
   };
   const outstandingSize = (): number => outstanding.length - outstandingHead;
+  const shiftOutstanding = (): OutstandingBatch | undefined => {
+    if (outstandingHead >= outstanding.length) {
+      return undefined;
+    }
+    const item = outstanding[outstandingHead];
+    outstandingHead += 1;
+    compactOutstanding();
+    return item;
+  };
+  const pushOutstanding = (item: OutstandingBatch): void => {
+    if (outstandingSize() >= maxOutstandingBatches) {
+      outstandingHead += 1;
+      emit({
+        ts: new Date().toISOString(),
+        sessionId,
+        direction: "agent->server",
+        bytesRaw: 0,
+        bytesSent: 0,
+        batchedCount: 0,
+        compressed: false,
+        delta: false,
+        queueDelayMs: 0,
+        note: "outstanding-trimmed",
+        signal: "queue-overflow",
+      });
+      compactOutstanding();
+    }
+    outstanding.push(item);
+  };
+  const requeueInbound = (entries: PendingInbound[]): void => {
+    if (entries.length === 0) {
+      return;
+    }
+    for (const entry of entries.reverse()) {
+      if (entry.lane === "priority") {
+        priorityQueue.unshift(entry);
+        priorityQueuedBytes += entry.payload.length;
+      } else {
+        normalQueue.unshift(entry);
+        normalQueuedBytes += entry.payload.length;
