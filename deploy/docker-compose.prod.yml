@@ -38,3 +38,43 @@ services:
       - "8181:8181"
 
   velocity-control-plane:
+    image: velocity:0.1.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command:
+      [
+        "control-plane",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "4200",
+        "--store-engine",
+        "json",
+        "--state-file",
+        "/state/control-plane-state.json",
+        "--valkey-url",
+        "redis://valkey:6379",
+        "--nats-url",
+        "nats://nats:4222"
+      ]
+    volumes:
+      - velocity_state:/state
+    ports:
+      - "4200:4200"
+
+  velocity-proxy:
+    image: velocity:0.1.0
+    depends_on:
+      - opa
+      - velocity-control-plane
+      - nats
+      - otel-collector
+    environment:
+      - VELOCITY_TARGET_WS=ws://host.docker.internal:4000
+    command:
+      - proxy
+      - --target
+      - ${VELOCITY_TARGET_WS:-ws://host.docker.internal:4000}
+      - --host
+      - 0.0.0.0
