@@ -265,3 +265,43 @@ export async function runProfile(profile: BenchProfile, runSeed = 1): Promise<Be
               }));
               socket.send(JSON.stringify(responses), { binary: false });
               return;
+            }
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+              const request = parsed as { id?: unknown };
+              socket.send(
+                JSON.stringify({
+                  jsonrpc: "2.0",
+                  id: request.id,
+                  result: request,
+                }),
+                { binary: false },
+              );
+              return;
+            }
+          } catch {
+            // passthrough non-JSON payloads
+          }
+          socket.send(data, { binary: isBinary });
+        }
+      }, delay);
+    });
+  });
+
+  const directUrl = `ws://127.0.0.1:${serverPort}`;
+  const proxyUrl = `ws://127.0.0.1:${proxyPort}`;
+
+  const proxy = await startProxy({
+    target: directUrl,
+    listenHost: "127.0.0.1",
+    listenPort: proxyPort,
+    ingressH2H3Pilot: false,
+    batchWindowMs: profile.batchWindowMs,
+    batchMaxMessages: 64,
+    batchMaxBytes: 131072,
+    minBatchWindowMs: profile.minBatchWindowMs,
+    maxBatchWindowMs: profile.maxBatchWindowMs,
+    latencyBudgetMs: profile.latencyBudgetMs,
+    enableZstd: false,
+    zstdMinBytes: 512,
+    zstdMinGainRatio: 0.03,
+    enableZstdDictionary: false,
