@@ -116,3 +116,43 @@ class VelocityControlClient:
     def put_runtime_profile(
         self,
         batch_window_ms: Optional[int] = None,
+        min_batch_window_ms: Optional[int] = None,
+        max_batch_window_ms: Optional[int] = None,
+        latency_budget_ms: Optional[int] = None,
+        batch_max_messages: Optional[int] = None,
+        batch_max_bytes: Optional[int] = None,
+        enable_zstd: Optional[bool] = None,
+        enable_delta: Optional[bool] = None,
+        safe_mode: Optional[bool] = None,
+        enable_passthrough_merge: Optional[bool] = None,
+    ) -> RuntimeProfile:
+        payload = {}
+        if batch_window_ms is not None:
+            payload["batchWindowMs"] = batch_window_ms
+        if min_batch_window_ms is not None:
+            payload["minBatchWindowMs"] = min_batch_window_ms
+        if max_batch_window_ms is not None:
+            payload["maxBatchWindowMs"] = max_batch_window_ms
+        if latency_budget_ms is not None:
+            payload["latencyBudgetMs"] = latency_budget_ms
+        if batch_max_messages is not None:
+            payload["batchMaxMessages"] = batch_max_messages
+        if batch_max_bytes is not None:
+            payload["batchMaxBytes"] = batch_max_bytes
+        if enable_zstd is not None:
+            payload["enableZstd"] = enable_zstd
+        if enable_delta is not None:
+            payload["enableDelta"] = enable_delta
+        if safe_mode is not None:
+            payload["safeMode"] = safe_mode
+        if enable_passthrough_merge is not None:
+            payload["enablePassthroughMerge"] = enable_passthrough_merge
+        raw = self._request("/v1/runtime/profile", method="PUT", body=payload)
+        return RuntimeProfile(
+            batch_window_ms=raw["batchWindowMs"],
+            min_batch_window_ms=raw["minBatchWindowMs"],
+            max_batch_window_ms=raw["maxBatchWindowMs"],
+            latency_budget_ms=raw["latencyBudgetMs"],
+            batch_max_messages=raw["batchMaxMessages"],
+            batch_max_bytes=raw["batchMaxBytes"],
+            enable_zstd=raw["enableZstd"],
