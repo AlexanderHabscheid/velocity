@@ -82,3 +82,43 @@ export function printStatsWithOptions(store: MetricsStore, options: PrintStatsOp
   const healthPenalty = denialEvents + safetyEvents;
   const topTenants = Object.entries(m.perTenant ?? {})
     .map(([tenantId, stats]) => ({
+      tenantId,
+      ...stats,
+      frameReductionRatio: tenantFrameReduction(stats.totalFramesRaw, stats.totalFramesSent),
+      denyEvents:
+        stats.policyDeniedEvents + stats.rateLimitDeniedEvents + stats.authRejectedEvents + stats.authzDeniedEvents,
+      safetyEvents:
+        stats.queueOverflowEvents + stats.backpressureEvents + stats.tenantBreakerOpenEvents + stats.sessionRollbackEvents,
+    }))
+    .sort((a, b) => b.totalFramesRaw - a.totalFramesRaw)
+    .slice(0, Math.max(1, options.tenantLimit));
+
+  if (options.json) {
+    const payload = {
+      updatedAt: m.updatedAt,
+      frames: {
+        raw: m.totalFramesRaw,
+        sent: m.totalFramesSent,
+        reduced: frameSavings,
+        reductionRatio: frameReductionRatio,
+      },
+      bytes: {
+        raw: m.totalBytesRaw,
+        sent: m.totalBytesSent,
+        saved: byteSavings,
+        reductionRatio: byteReductionRatio,
+      },
+      latency: {
+        avgMs: avgLatency,
+        p95Ms: p95,
+        samples: m.latencySamples,
+      },
+      loopKpis: {
+        loopTurnAvgMs: avgLoopTurnMs,
+        toolRoundtripAvgMs: avgToolRoundtripMs,
+        framesPerTurnAvg: avgFramesPerTurn,
+        queueDelayAvgMs: avgQueueDelayMs,
+        queueDelayP95Ms: p95QueueDelayMs,
+        loopTurnSamples: m.loopTurnSamples,
+      },
+      safetyEvents: {
