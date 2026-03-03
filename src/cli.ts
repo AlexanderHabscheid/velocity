@@ -677,3 +677,42 @@ program
   .command("bootstrap")
   .option("--out-dir <path>", "directory where velocity template files are written", ".")
   .option("--force", "overwrite existing velocity bootstrap files", false)
+  .action((opts: { outDir: string; force: boolean }) => {
+    runBootstrap({
+      outDir: opts.outDir,
+      force: opts.force,
+    });
+  });
+
+program
+  .command("bench")
+  .option("--messages <number>", "number of logical request/response pairs", "600")
+  .option("--burst <number>", "logical ops sent back-to-back each tick", "8")
+  .option("--payload-bytes <number>", "payload size per message in bytes", "512")
+  .option("--batch-window-ms <number>", "batch window for proxied trial", "10")
+  .option("--min-batch-window-ms <number>", "adaptive minimum batch window", "0")
+  .option("--max-batch-window-ms <number>", "adaptive maximum batch window", "20")
+  .option("--latency-budget-ms <number>", "target p95 latency budget", "40")
+  .option("--server-delay-ms <number>", "simulated upstream processing delay", "2")
+  .option("--jitter-ms <number>", "simulated random upstream jitter", "0")
+  .option("--max-p95-delta-ms <number>", "pass threshold for p95 latency delta in milliseconds", "8")
+  .option("--max-avg-delta-ms <number>", "pass threshold for avg latency delta in milliseconds", "6")
+  .option("--min-frame-reduction-pct <number>", "pass threshold for frame reduction percent", "10")
+  .option("--min-byte-reduction-pct <number>", "pass threshold for byte reduction percent", "85")
+  .action(async (opts: {
+    messages: string;
+    burst: string;
+    payloadBytes: string;
+    batchWindowMs: string;
+    minBatchWindowMs: string;
+    maxBatchWindowMs: string;
+    latencyBudgetMs: string;
+    serverDelayMs: string;
+    jitterMs: string;
+    maxP95DeltaMs: string;
+    maxAvgDeltaMs: string;
+    minFrameReductionPct: string;
+    minByteReductionPct: string;
+  }) => {
+    await runBench({
+      messages: Number(opts.messages),
