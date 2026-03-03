@@ -221,3 +221,43 @@ async function startUwsListener(options: ListenerOptions): Promise<ListenerHandl
       }
       adapter.emit("message", Buffer.from(message), isBinary);
     },
+    pong: (rawSocket: any) => {
+      const adapter = socketMap.get(rawSocket);
+      if (!adapter) {
+        return;
+      }
+      adapter.emit("pong");
+    },
+    close: (rawSocket: any) => {
+      const adapter = socketMap.get(rawSocket);
+      if (!adapter) {
+        return;
+      }
+      socketMap.delete(rawSocket);
+      adapter.markClosed();
+    },
+  });
+
+  const token = await new Promise<any>((resolve, reject) => {
+    app.listen(options.host, options.port, (listenToken: unknown) => {
+      if (!listenToken) {
+        reject(new Error("uWebSockets.js failed to bind listener"));
+        return;
+      }
+      resolve(listenToken);
+    });
+  });
+
+  return {
+    close: async () => {
+      for (const adapter of socketMap.values()) {
+        adapter.close();
+      }
+      socketMap.clear();
+      if (typeof uws.default.us_listen_socket_close === "function") {
+        uws.default.us_listen_socket_close(token);
+      }
+      app.close();
+    },
+  };
+}
