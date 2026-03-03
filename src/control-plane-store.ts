@@ -78,3 +78,43 @@ export class JsonControlPlaneStore implements ControlPlaneStore {
     const current = await this.getTenantPolicy(tenantId);
     const next: TenantPolicy = {
       tenantId,
+      enabled: update.enabled !== undefined ? update.enabled : current.enabled,
+      rateLimitRps: typeof update.rateLimitRps === "number" ? Math.max(1, Math.floor(update.rateLimitRps)) : current.rateLimitRps,
+      updatedAt: new Date().toISOString(),
+    };
+    this.state.policies[tenantId] = next;
+    this.persist();
+    return next;
+  }
+
+  async checkRateLimit(tenantId: string, rateLimitRps?: number): Promise<RateLimitDecision> {
+    const policy = await this.getTenantPolicy(tenantId);
+    const perSecond = Math.max(1, Math.floor(rateLimitRps ?? policy.rateLimitRps));
+    const nowMs = Date.now();
+
+    const current = this.state.buckets[tenantId] ?? { tokens: perSecond, lastMs: nowMs };
+    const decision = computeDecision(current.tokens, current.lastMs, perSecond, nowMs);
+
+    this.state.buckets[tenantId] = { tokens: decision.nextTokens, lastMs: nowMs };
+    this.persist();
+
+    return {
+      allow: decision.allow,
+      remainingTokens: Number(decision.nextTokens.toFixed(3)),
+      updatedAt: new Date(nowMs).toISOString(),
+    };
+  }
+
+  private readState(): JsonStoreState {
+    if (!fs.existsSync(this.absolutePath)) {
+      return { policies: {}, buckets: {} };
+    }
+    try {
+      const parsed = JSON.parse(fs.readFileSync(this.absolutePath, "utf8")) as JsonStoreState;
+      return {
+        policies: parsed.policies ?? {},
+        buckets: parsed.buckets ?? {},
+      };
+    } catch {
+      return { policies: {}, buckets: {} };
+    }
