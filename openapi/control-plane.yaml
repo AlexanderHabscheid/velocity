@@ -1,0 +1,40 @@
+openapi: 3.0.3
+info:
+  title: Velocity Control Plane API
+  version: 0.1.0
+servers:
+  - url: http://127.0.0.1:4200
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  now:
+                    type: string
+                    format: date-time
+                  storeEngine:
+                    type: string
+                    enum: [json, sqlite]
+                required: [ok, now]
+  /v1/runtime/profile:
+    get:
+      operationId: getRuntimeProfile
+      responses:
+        '200':
+          description: Current runtime profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuntimeProfile'
+    put:
+      operationId: putRuntimeProfile
+      requestBody:
