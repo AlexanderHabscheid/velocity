@@ -162,3 +162,43 @@ export function printStatsWithOptions(store: MetricsStore, options: PrintStatsOp
   console.log("agent loop kpis:");
   console.log(`loop turn avg: ${avgLoopTurnMs.toFixed(2)}ms (${m.loopTurnSamples} samples)`);
   console.log(`tool roundtrip avg: ${avgToolRoundtripMs.toFixed(2)}ms`);
+  console.log(`frames per turn avg: ${avgFramesPerTurn.toFixed(2)}`);
+  console.log(`queue delay avg: ${avgQueueDelayMs.toFixed(2)}ms`);
+  console.log(`queue delay p95: ${p95QueueDelayMs.toFixed(2)}ms`);
+  console.log("");
+  console.log("safety:");
+  console.log(`queue overflow events: ${m.queueOverflowEvents}`);
+  console.log(`backpressure events: ${m.backpressureEvents}`);
+  console.log(`tenant breaker opens: ${m.tenantBreakerOpenEvents}`);
+  console.log(`session rollbacks: ${m.sessionRollbackEvents}`);
+  console.log("");
+  console.log("access controls:");
+  console.log(`policy denies: ${m.policyDeniedEvents}`);
+  console.log(`rate-limit denies: ${m.rateLimitDeniedEvents}`);
+  console.log(`auth rejects: ${m.authRejectedEvents}`);
+  console.log(`authz denies: ${m.authzDeniedEvents}`);
+  console.log("");
+  console.log(`health penalty: ${healthPenalty}`);
+  console.log("");
+  console.log(`tenant breakdown (top ${topTenants.length} by frame volume):`);
+  if (topTenants.length === 0) {
+    console.log("  no tenant traffic recorded");
+  } else {
+    for (const tenant of topTenants) {
+      console.log(
+        `  ${tenant.tenantId}: frames=${tenant.totalFramesRaw} reduction=${(tenant.frameReductionRatio * 100).toFixed(2)}% latencyAvg=${safeRatio(tenant.latencyMsTotal, tenant.latencySamples).toFixed(2)}ms denies=${tenant.denyEvents} safety=${tenant.safetyEvents}`,
+      );
+    }
+  }
+
+  const advice: string[] = [];
+  if (m.queueOverflowEvents > 0) {
+    advice.push("increase --max-inbound-queue or reduce upstream message burst");
+  }
+  if (m.backpressureEvents > 0) {
+    advice.push("tune --max-socket-backpressure-bytes and check downstream consumer speed");
+  }
+  if (m.tenantBreakerOpenEvents > 0 || m.sessionRollbackEvents > 0) {
+    advice.push("evaluate --latency-budget-ms and batching window bounds for safer adaptive behavior");
+  }
+  if (p95QueueDelayMs > 5) {
