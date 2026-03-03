@@ -238,3 +238,43 @@ program
     const poolTargets = parseTargetPool(opts.target, opts.targetPool);
     await startProxy({
       target: opts.target,
+      targetPool: poolTargets.length > 1
+        ? {
+          targets: poolTargets,
+          ewmaAlpha: Number(opts.targetPoolEwmaAlpha),
+          ejectFailures: Number(opts.targetPoolEjectFailures),
+          ejectMs: Number(opts.targetPoolEjectMs),
+          probeIntervalMs: Number(opts.targetPoolProbeIntervalMs),
+          probeTimeoutMs: Number(opts.targetPoolProbeTimeoutMs),
+          initialLatencyMs: 25,
+          connectionPenaltyMs: 2,
+          failurePenaltyMs: 75,
+          unhealthyPenaltyMs: 100,
+        }
+        : undefined,
+      listenHost: opts.host,
+      listenPort: Number(opts.port),
+      listenerEngine: opts.listenerEngine,
+      ingressH2H3Pilot: opts.ingressH2H3Pilot,
+      batchWindowMs: Number(opts.batchWindowMs),
+      batchMaxMessages: Number(opts.batchMaxMessages),
+      batchMaxBytes: Number(opts.batchMaxBytes),
+      minBatchWindowMs: Number(opts.minBatchWindowMs),
+      maxBatchWindowMs: Number(opts.maxBatchWindowMs),
+      latencyBudgetMs: Number(opts.latencyBudgetMs),
+      enableZstd: opts.zstd,
+      zstdMinBytes: Number(opts.zstdMinBytes),
+      zstdMinGainRatio: Number(opts.zstdMinGainRatio),
+      enableZstdDictionary: opts.zstdDictionary,
+      zstdDictionaryBase64: opts.zstdDictionaryBase64 || undefined,
+      zstdDictionaryMinBytes: Number(opts.zstdDictionaryMinBytes),
+      enableProtobuf: opts.protobuf,
+      enableDelta: opts.delta,
+      structuredDeltaTypes: opts.structuredDeltaTypes
+        ? opts.structuredDeltaTypes.split(",").map((x) => x.trim()).filter(Boolean)
+        : [],
+      autoFallback: opts.autoFallback,
+      enableNegotiation: opts.negotiate,
+      negotiationTimeoutMs: Number(opts.negotiationTimeoutMs),
+      enablePassthroughMerge: opts.passthroughMerge,
+      safeMode: opts.safeMode,
