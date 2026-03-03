@@ -54,3 +54,25 @@ spec:
             - --rate-limit-control-plane-endpoint
             - http://velocity-control-plane.velocity.svc.cluster.local:4200
             - --nats-url
+            - nats://velocity-nats.velocity.svc.cluster.local:4222
+            - --otlp-http-endpoint
+            - http://velocity-otel-collector.velocity.svc.cluster.local:4318
+          ports:
+            - containerPort: 4100
+            - containerPort: 9464
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          readinessProbe:
+            tcpSocket:
+              port: 4100
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 4100
+            initialDelaySeconds: 10

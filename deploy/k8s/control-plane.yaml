@@ -91,3 +91,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: velocity-control-plane-state
   namespace: velocity
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

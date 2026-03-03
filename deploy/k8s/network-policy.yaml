@@ -100,3 +100,9 @@ spec:
         - protocol: TCP
           port: 4222
     - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
