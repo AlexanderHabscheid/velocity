@@ -78,3 +78,40 @@ test("control-plane persists policy and supports distributed rate-limit checks",
   const persistedResp = await fetch(`http://127.0.0.1:${port2}/v1/tenants/${tenant}/policy`);
   const persistedPolicy = await persistedResp.json() as { rateLimitRps: number };
   assert.equal(persistedPolicy.rateLimitRps, 2);
+
+  await handle2.close();
+});
+
+test("control-plane exposes hot runtime profile update endpoint", async () => {
+  const port = await getOpenPort();
+  const handle = await startControlPlaneWithOptions({
+    host: "127.0.0.1",
+    port,
+    storeEngine: "json",
+    stateFile: path.join(os.tmpdir(), `velocity-control-plane-runtime-${Date.now()}.json`),
+    dbPath: path.join(os.tmpdir(), `velocity-control-plane-runtime-${Date.now()}.db`),
+  });
+  const base = `http://127.0.0.1:${port}`;
+
+  const before = await fetch(`${base}/v1/runtime/profile`);
+  assert.equal(before.status, 200);
+
+  const update = await fetch(`${base}/v1/runtime/profile`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      batchWindowMs: 2,
+      minBatchWindowMs: 0,
+      maxBatchWindowMs: 6,
+      latencyBudgetMs: 20,
+      enableDelta: true,
+    }),
+  });
+  assert.equal(update.status, 200);
+  const runtime = await update.json() as { batchWindowMs: number; maxBatchWindowMs: number; enableDelta: boolean };
+  assert.equal(runtime.batchWindowMs, 2);
+  assert.equal(runtime.maxBatchWindowMs, 6);
+  assert.equal(runtime.enableDelta, true);
+
+  await handle.close();
+});

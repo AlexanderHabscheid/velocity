@@ -78,3 +78,6 @@ export function startControlPlaneWithOptions(options: ControlPlaneOptions): Prom
       enableZstd: false,
       enableDelta: false,
       safeMode: false,
+      enablePassthroughMerge: true,
+      updatedAt: new Date().toISOString(),
+    };
