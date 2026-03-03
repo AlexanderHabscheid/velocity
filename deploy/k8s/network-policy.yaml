@@ -60,3 +60,43 @@ spec:
         - namespaceSelector: {}
       ports:
         - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: velocity-control-plane-allow
+  namespace: velocity
+spec:
+  podSelector:
+    matchLabels:
+      app: velocity-control-plane
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: velocity-proxy
+      ports:
+        - protocol: TCP
+          port: 4200
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: velocity-valkey
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:
+        - podSelector:
+            matchLabels:
+              app: velocity-nats
+      ports:
+        - protocol: TCP
+          port: 4222
+    - to:
