@@ -118,3 +118,43 @@ export class SemanticCoalescer {
     for (const item of parsed) {
       if (!item || typeof item !== "object" || Array.isArray(item)) {
         out.push(Buffer.from(JSON.stringify(item), "utf8"));
+        changed = true;
+        continue;
+      }
+      if (!isJsonRpcResponse(item as Record<string, unknown>)) {
+        out.push(Buffer.from(JSON.stringify(item), "utf8"));
+        changed = true;
+        continue;
+      }
+      const expanded = this.expandResponseObject(item as Record<string, unknown>);
+      out.push(...expanded);
+      if (expanded.length !== 1 || !Buffer.from(JSON.stringify(item), "utf8").equals(expanded[0])) {
+        changed = true;
+      }
+    }
+    if (!changed) {
+      return [payload];
+    }
+    return out;
+  }
+
+  clear(): void {
+    this.signatureToPrimary.clear();
+    this.primaryById.clear();
+  }
+
+  private expandResponseObject(response: Record<string, unknown>): Buffer[] {
+    const rawId = response.id;
+    if (rawId !== null && typeof rawId !== "string" && typeof rawId !== "number") {
+      return [Buffer.from(JSON.stringify(response), "utf8")];
+    }
+    const key = idKey(rawId as JsonRpcId);
+    const pending = this.primaryById.get(key);
+    if (!pending) {
+      return [Buffer.from(JSON.stringify(response), "utf8")];
+    }
+    this.primaryById.delete(key);
+    if (this.signatureToPrimary.get(pending.signature) === key) {
+      this.signatureToPrimary.delete(pending.signature);
+    }
+    const out = [Buffer.from(JSON.stringify(response), "utf8")];
