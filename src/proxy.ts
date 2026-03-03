@@ -198,3 +198,43 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
         });
         if (!decision.allow) {
           logger.warn("velocity policy denied session", { tenantId });
+          store.recordSignal("policy-denied", tenantId);
+          void publishEvent("proxy.policy_denied", { tenantId });
+          agentSocket.close(1008, "policy-denied");
+          return;
+        }
+        if (
+          typeof decision.rateLimitRps === "number" &&
+          decision.rateLimitRps > 0 &&
+          !(await rateLimiter.allow(tenantId, decision.rateLimitRps))
+        ) {
+          logger.warn("velocity rate-limited tenant", { tenantId, rateLimitRps: decision.rateLimitRps });
+          store.recordSignal("rate-limit-denied", tenantId);
+          void publishEvent("proxy.rate_limit_denied", { tenantId, rateLimitRps: decision.rateLimitRps });
+          agentSocket.close(1013, "rate-limit");
+          return;
+        }
+      }
+      const canaryDecision = canary?.onSessionStart(tenantId);
+      const tenantSafeMode = options.safeMode || !!canaryDecision?.safeMode;
+      if (canaryDecision?.promoted) {
+        logger.info("velocity canary promoted tenant", { tenantId });
+      }
+      const selectedTarget = upstreamPool?.acquireTarget() ?? options.target;
+      if (!selectedTarget) {
+        logger.warn("velocity upstream pool exhausted", { tenantId });
+        agentSocket.close(1013, "upstream_unavailable");
+        return;
+      }
+      const runtime = runtimeProfileOverride;
+      const resolvedSafeMode = (runtime?.safeMode ?? options.safeMode) || tenantSafeMode;
+      createProxySession({
+        agentSocket,
+        targetUrl: selectedTarget,
+        sessionId: randomUUID(),
+        tenantId,
+        codec,
+        store,
+        options: {
+          ...options,
+          batchWindowMs: runtime?.batchWindowMs ?? options.batchWindowMs,
