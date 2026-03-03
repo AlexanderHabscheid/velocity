@@ -261,3 +261,10 @@ async function startUwsListener(options: ListenerOptions): Promise<ListenerHandl
     },
   };
 }
+
+export async function startListener(options: ListenerOptions): Promise<ListenerHandle> {
+  if (options.engine === "uwebsockets") {
+    return startUwsListener(options);
+  }
+  return startWsListener(options);
+}

@@ -271,3 +271,36 @@ export class MetricsStore {
   private snapshotTraceBuffers(): Array<{ sessionId: string; data: string }> {
     const items: Array<{ sessionId: string; data: string }> = [];
     for (const [sessionId, lines] of this.traceBuffers) {
+      if (lines.length === 0) {
+        continue;
+      }
+      items.push({ sessionId, data: lines.join("") });
+      this.traceBuffers.set(sessionId, []);
+    }
+    return items;
+  }
+
+  private async flushLoop(): Promise<void> {
+    this.flushing = true;
+    try {
+      while (this.flushQueued) {
+        this.flushQueued = false;
+        const writeMetrics = this.metricsDirty;
+        const metricsSnapshot = writeMetrics ? `${JSON.stringify(this.metrics, null, 2)}\n` : "";
+        const traces = this.snapshotTraceBuffers();
+
+        try {
+          if (writeMetrics) {
+            await fsp.writeFile(this.metricsFile, metricsSnapshot, "utf8");
+            this.metricsDirty = false;
+          }
+
+          for (const trace of traces) {
+            const tracePath = this.getTracePath(trace.sessionId);
+            await fsp.appendFile(tracePath, trace.data, "utf8");
+          }
+        } catch (err) {
+          if (writeMetrics) {
+            this.metricsDirty = true;
+          }
+          for (const trace of traces) {
