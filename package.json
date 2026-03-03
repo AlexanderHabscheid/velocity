@@ -1,0 +1,40 @@
+{
+  "name": "velocity",
+  "version": "0.1.0",
+  "description": "WebSocket multiplexer and batching proxy for agent loops",
+  "type": "commonjs",
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE",
+    "openapi/"
+  ],
+  "bin": {
+    "velocity": "dist/cli.js"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "npm run typecheck",
+    "prepack": "npm run build && npm run contract:check",
+    "contract:check": "node scripts/contract-check.mjs",
+    "test": "npm run build && node --test dist/**/*.test.js",
+    "bench:ci": "node dist/cli.js bench-ci --profiles all --repeats 3 --seed 42 --out-dir .velocity/bench-reports --fail-on-regression",
+    "bench:certify": "node dist/cli.js bench-ci --profiles all --repeats 3 --seed 42 --out-dir .velocity/bench-reports --baseline-report ci/bench/baseline-report.json --max-p95-regression-pct 10 --max-p95-regression-ms-floor 2 --max-byte-reduction-drop-pct 5 --fail-on-regression",
+    "package:smoke": "node scripts/package-smoke.mjs",
+    "release:verify": "npm run lint && npm test && npm run contract:check && npm run bench:ci && npm run bench:certify && npm run package:smoke",
+    "perf:bakeoff": "node scripts/perf-bakeoff.mjs",
+    "toxiproxy:smoke": "node scripts/toxiproxy-smoke.mjs",
+    "sdk:generate:ts": "docker run --rm -v \"$PWD:/local\" openapitools/openapi-generator-cli generate -i /local/openapi/control-plane.yaml -g typescript-fetch -o /local/sdk/typescript/generated",
+    "sdk:generate:py": "docker run --rm -v \"$PWD:/local\" openapitools/openapi-generator-cli generate -i /local/openapi/control-plane.yaml -g python -o /local/sdk/python/generated"
+  },
+  "dependencies": {
+    "@msgpack/msgpack": "^3.0.0",
+    "commander": "^13.1.0",
+    "jose": "^6.1.2",
+    "nats": "^2.29.3",
+    "redis": "^5.8.2",
+    "ws": "^8.18.3"
+  },
+  "optionalDependencies": {
