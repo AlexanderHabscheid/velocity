@@ -58,3 +58,43 @@ const pyCliPath = path.join(repoRoot, 'sdk/python/velocity_control_sdk/cli.py');
 const openapiText = fs.readFileSync(openapiPath, 'utf8');
 const tsSdkText = fs.readFileSync(tsSdkPath, 'utf8');
 const pySdkText = fs.readFileSync(pySdkPath, 'utf8');
+const pyCliText = fs.readFileSync(pyCliPath, 'utf8');
+
+const operationIds = collectOperationIds(openapiText);
+const tsMethods = collectTsMethods(tsSdkText);
+const pyMethods = collectPyMethods(pySdkText);
+const pyCliCommands = collectPyCliCommands(pyCliText);
+
+const expectedCli = new Map([
+  ['getTenantPolicy', 'get-policy'],
+  ['putTenantPolicy', 'put-policy'],
+  ['checkTenantRateLimit', 'check-rate-limit'],
+  ['getRuntimeProfile', 'get-runtime-profile'],
+  ['putRuntimeProfile', 'put-runtime-profile'],
+]);
+
+const failures = [];
+
+for (const operationId of operationIds) {
+  if (!tsMethods.has(operationId)) {
+    failures.push(`typescript sdk missing method for operationId '${operationId}'`);
+  }
+
+  const pyMethod = toSnakeCase(operationId);
+  if (!pyMethods.has(pyMethod)) {
+    failures.push(`python sdk missing method '${pyMethod}' for operationId '${operationId}'`);
+  }
+
+  const cliCommand = expectedCli.get(operationId);
+  if (cliCommand && !pyCliCommands.has(cliCommand)) {
+    failures.push(`python cli missing command '${cliCommand}' for operationId '${operationId}'`);
+  }
+}
+
+if (failures.length > 0) {
+  console.error('contract check failed:');
+  for (const failure of failures) {
+    console.error(`- ${failure}`);
+  }
+  process.exit(1);
+}
