@@ -191,3 +191,43 @@ export class MetricsStore {
     this.metricsDirty = true;
   }
 
+  recordSignal(signal: NonNullable<FrameRecord["signal"]>, tenantId = "default"): void {
+    const perTenant = this.getTenantMetrics(tenantId);
+    if (signal === "queue-overflow") {
+      this.metrics.queueOverflowEvents += 1;
+      perTenant.queueOverflowEvents += 1;
+    }
+    if (signal === "backpressure") {
+      this.metrics.backpressureEvents += 1;
+      perTenant.backpressureEvents += 1;
+    }
+    if (signal === "tenant-breaker-open") {
+      this.metrics.tenantBreakerOpenEvents += 1;
+      perTenant.tenantBreakerOpenEvents += 1;
+    }
+    if (signal === "session-rollback") {
+      this.metrics.sessionRollbackEvents += 1;
+      perTenant.sessionRollbackEvents += 1;
+    }
+    if (signal === "policy-denied") {
+      this.metrics.policyDeniedEvents += 1;
+      perTenant.policyDeniedEvents += 1;
+    }
+    if (signal === "rate-limit-denied") {
+      this.metrics.rateLimitDeniedEvents += 1;
+      perTenant.rateLimitDeniedEvents += 1;
+    }
+    if (signal === "auth-rejected") {
+      this.metrics.authRejectedEvents += 1;
+      perTenant.authRejectedEvents += 1;
+    }
+    if (signal === "authz-denied") {
+      this.metrics.authzDeniedEvents += 1;
+      perTenant.authzDeniedEvents += 1;
+    }
+    this.metrics.updatedAt = new Date().toISOString();
+    this.metricsDirty = true;
+  }
+
+  private recordLatencyHistogram(latencyMs: number): void {
+    const bounds = [1, 2, 5, 10, 20, 50, 100, 250, 500, 1000];
