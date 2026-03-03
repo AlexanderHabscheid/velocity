@@ -118,3 +118,27 @@ jobs:
       - name: Install Autobahn testsuite
         run: pip install autobahntestsuite
       - name: Start target
+        run: node scripts/autobahn-target.mjs &
+      - name: Run Autobahn
+        run: wstest -m fuzzingclient -s ci/autobahn/fuzzingclient.json
+
+  k6-load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Start target
+        run: K6_WS_PORT=9191 node scripts/k6-ws-target.mjs &
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+      - name: Run k6 websocket load
+        run: K6_WS_TARGET=ws://127.0.0.1:9191 k6 run ci/k6/ws-load.js
+
