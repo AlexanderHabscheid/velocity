@@ -38,3 +38,31 @@ function isValidEnvelope(value: unknown): value is VelocityEnvelope {
   if (!isRecord(value)) {
     return false;
   }
+  if (typeof value.id !== "string" || value.id.length === 0 || value.id.length > 256) {
+    return false;
+  }
+  if (typeof value.sentAt !== "number" || !Number.isFinite(value.sentAt)) {
+    return false;
+  }
+  if (!Array.isArray(value.frames)) {
+    return false;
+  }
+  for (const frame of value.frames) {
+    if (!(frame instanceof Uint8Array)) {
+      return false;
+    }
+  }
+
+  if (value.kind === "batch" || value.kind === "single") {
+    return true;
+  }
+
+  if (value.kind === "delta") {
+    if (!isRecord(value.deltaPatch)) {
+      return false;
+    }
+    return typeof value.deltaPatch.prefix === "number" &&
+      typeof value.deltaPatch.suffix === "number" &&
+      typeof value.deltaPatch.changed === "string";
+  }
+

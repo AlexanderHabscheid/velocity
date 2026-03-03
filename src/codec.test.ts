@@ -38,3 +38,15 @@ test("codec rejects invalid envelope shape", async () => {
   const packed = Buffer.from(encode(invalid));
   const frame = Buffer.concat([Buffer.from([0]), packed]);
   const parsed = await codec.parse(frame);
+  assert.equal(parsed, null);
+});
+
+test("codec rejects oversized frame", async () => {
+  const codec = new VelocityCodec(false);
+  await codec.init();
+
+  const tooLarge = Buffer.alloc((16 * 1024 * 1024) + 2, 0);
+  tooLarge[0] = 0;
+  const parsed = await codec.parse(tooLarge);
+  assert.equal(parsed, null);
+});
