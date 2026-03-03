@@ -118,3 +118,43 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
         if (!resp.ok) {
           return;
         }
+        const body = await resp.json() as RuntimeProfileOverride;
+        runtimeProfileOverride = body;
+      } catch {
+        // swallow runtime polling errors
+      }
+    };
+    await poll();
+    const pollMs = Math.max(500, options.runtimeControlPlanePollMs ?? 5000);
+    runtimePollTimer = setInterval(() => {
+      void poll();
+    }, pollMs);
+    runtimePollTimer.unref();
+  }
+  const canary = options.canary
+    ? new CanaryPolicyManager({
+      percent: options.canary.percent,
+      promotionWindowMs: options.canary.promotionWindowMs,
+      minSessions: options.canary.minSessions,
+      stateFile: options.canary.stateFile,
+    })
+    : null;
+  const listener = await startListener({
+    host: options.listenHost,
+    port: options.listenPort,
+    engine: options.listenerEngine ?? "ws",
+    maxPayloadBytes: options.listenerMaxPayloadBytes,
+    logger,
+    onConnection: async (agentSocket, req) => {
+      const tenantId = resolveTenantId(req.url, req.headers["x-velocity-tenant"]?.toString());
+      let identityClaims: Record<string, unknown> = {};
+      if (options.authn) {
+        try {
+          const identity = await authenticateJwt(req.headers, options.authn);
+          if (!identity) {
+            logger.warn("velocity auth rejected session", { tenantId, reason: "missing_or_invalid_token" });
+            store.recordSignal("auth-rejected", tenantId);
+            void publishEvent("proxy.auth_rejected", { tenantId, reason: "missing_or_invalid_token" });
+            agentSocket.close(1008, "unauthorized");
+            return;
+          }
