@@ -582,3 +582,42 @@ export function createProxySession(params: SessionParams): void {
       upstreamObserver?.onLatency?.(latencyMs);
       emit({
         ts: new Date().toISOString(),
+        sessionId,
+        metricsOnly: true,
+        direction: "server->agent",
+        bytesRaw: 0,
+        bytesSent: 0,
+        batchedCount: 0,
+        compressed: false,
+        delta: false,
+        queueDelayMs: batch.queueDelayMs,
+        latencyMs,
+        loopTurnMs: latencyMs,
+        toolRoundtripMs: latencyMs,
+        framesPerTurn: batch.count,
+        note: "loop-turn-sample",
+      });
+      controller.onOutbound(batch.queueDelayMs, batch.count);
+      controller.onInbound(latencyMs);
+      const guard = hardGuard.record(latencyMs);
+      if (guard.changed) {
+        emit({
+          ts: new Date().toISOString(),
+          sessionId,
+          direction: "agent->server",
+          bytesRaw: 0,
+          bytesSent: 0,
+          batchedCount: 0,
+          compressed: false,
+          delta: false,
+          queueDelayMs: 0,
+          latencyMs,
+          note: guard.guarded ? `hard-guard-on(p95=${guard.p95.toFixed(2)}ms)` : `hard-guard-off(p95=${guard.p95.toFixed(2)}ms)`,
+        });
+        if (guard.guarded) {
+          const breaker = safety.recordTenantBreach();
+          if (breaker.opened) {
+            emit({
+              ts: new Date().toISOString(),
+              sessionId,
+              direction: "agent->server",
