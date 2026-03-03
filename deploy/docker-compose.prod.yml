@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  nats:
+    image: nats:2.11-alpine
+    command: ["-js"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+
+  valkey:
+    image: valkey/valkey:8.1-alpine
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+
+  envoy:
+    image: envoyproxy/envoy:v1.31.5
+    depends_on:
+      - velocity-proxy
+    volumes:
+      - ./deploy/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+    ports:
+      - "8080:8080"
+
+  opa:
+    image: openpolicyagent/opa:0.68.0-static
+    command:
+      - run
+      - --server
+      - --addr
+      - :8181
+      - /policy/policy.rego
+      - /policy/data.json
+    volumes:
+      - ./deploy/opa:/policy:ro
+    ports:
+      - "8181:8181"
+
+  velocity-control-plane:
