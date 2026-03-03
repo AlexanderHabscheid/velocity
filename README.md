@@ -189,3 +189,13 @@ velocity proxy --target ws://localhost:4000 --otlp-http-endpoint http://localhos
 ```bash
 npm run bench:ci
 npm run bench:certify
+npm run package:smoke
+```
+
+This command fails CI when any profile exceeds configured p95/avg latency regression thresholds or misses minimum byte reduction.
+`bench-ci` is deterministic by default using seeded jitter and median aggregation across repeated runs.
+`bench:certify` additionally compares current results to `ci/bench/baseline-report.json` for baseline-aware regression checks.
+The p95 certification guard uses both percentage and absolute-millisecond slack to reduce low-latency measurement noise flakiness.
+`package:smoke` validates that the packed npm tarball installs and runs `velocity --version` and `velocity doctor` in a clean temp project.
+
+## Advanced

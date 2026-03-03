@@ -198,3 +198,5 @@ export class UpstreamPool {
       socket.once("close", () => finish(false, "probe-close-before-open"));
       setTimeout(() => finish(false, "probe-timeout"), this.options.probeTimeoutMs).unref();
     });
+  }
+}

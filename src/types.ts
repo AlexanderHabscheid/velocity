@@ -198,3 +198,31 @@ export interface VelocityEnvelope {
     type: "hello" | "hello-ack";
     ackFor?: string;
     capabilities: {
+      protocolVersion: number;
+      msgpack: boolean;
+      zstd: boolean;
+      zstdDictionary?: boolean;
+      protobuf?: boolean;
+      delta: boolean;
+      batching: boolean;
+      adaptiveBatching: boolean;
+      latencyBudgetMs: number;
+      batchWindowMs: number;
+    };
+  };
+  deltaPatch?: {
+    mode?: "text" | "structured";
+    prefix: number;
+    suffix: number;
+    changed: string;
+    structuredType?: string;
+    set?: Record<string, unknown>;
+    unset?: string[];
+  };
+}
+
+export interface SerializedFrame {
+  buffer: Buffer;
+  compressed: boolean;
+  kind: VelocityEnvelope["kind"];
+}
