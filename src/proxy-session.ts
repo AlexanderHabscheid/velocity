@@ -660,3 +660,42 @@ export function createProxySession(params: SessionParams): void {
         }
         if (isControlHello(parsed.envelope)) {
           const ack = buildHello(localCaps, true, parsed.envelope.id);
+          localControlIds.add(ack.id);
+          const ackEncoded = await codec.serialize(ack, { allowCompression: options.enableZstd });
+          targetSocket.send(ackEncoded.buffer, { binary: true });
+          return;
+        }
+        if (isControlHelloAck(parsed.envelope) && parsed.envelope.control?.ackFor === helloId) {
+          if (negotiationTimer) {
+            clearTimeout(negotiationTimer);
+            negotiationTimer = null;
+          }
+          setMode("velocity", "hello-acknowledged");
+          await flushBatch();
+          return;
+        }
+      }
+      if (!parsed) {
+        if (negotiationTimer) {
+          clearTimeout(negotiationTimer);
+          negotiationTimer = null;
+        }
+        setMode("passthrough", "non-velocity-upstream");
+        const expanded = coalescer.expandResponse(outgoing);
+        for (const response of expanded) {
+          handlePassthroughDownstream(
+            { sessionId, emit, agentSocket, latencyMs },
+            response,
+            Boolean(isBinary),
+            options.enablePassthroughMerge,
+          );
+        }
+        await flushBatch();
+        return;
+      }
+    }
+    if (mode === "passthrough" || !parsed) {
+      const expanded = coalescer.expandResponse(outgoing);
+      for (const response of expanded) {
+        handlePassthroughDownstream(
+          { sessionId, emit, agentSocket, latencyMs },
