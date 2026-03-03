@@ -353,3 +353,43 @@ function decodeDeltaPatch(data: Uint8Array): NonNullable<VelocityEnvelope["delta
             entryKey = str;
           } else {
             try {
+              entryValue = JSON.parse(str) as unknown;
+            } catch {
+              entryValue = str;
+            }
+          }
+          inner = val.next;
+          continue;
+        }
+        const skipped = skipField(entry.value, innerWire, inner);
+        if (skipped === null) {
+          return null;
+        }
+        inner = skipped;
+      }
+      if (entryKey) {
+        out.set ??= {};
+        out.set[entryKey] = entryValue;
+      }
+      offset = entry.next;
+      continue;
+    }
+    const skipped = skipField(data, wire, offset);
+    if (skipped === null) {
+      return null;
+    }
+    offset = skipped;
+  }
+  return out;
+}
+
+function toKind(code: number): VelocityEnvelope["kind"] {
+  if (code === 1) {
+    return "batch";
+  }
+  if (code === 2) {
+    return "single";
+  }
+  if (code === 3) {
+    return "delta";
+  }
