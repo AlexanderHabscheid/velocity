@@ -168,3 +168,24 @@ Optional service-mode telemetry endpoint:
 
 ```bash
 velocity proxy --target ws://localhost:4000 --metrics-port 9464
+```
+
+Then scrape when needed:
+
+```bash
+curl http://127.0.0.1:9464/metrics
+```
+
+This exports counters and gauges for frame/byte reduction, latency, loop KPIs, queue overflow events, backpressure events, safety rollbacks, and access-control deny paths.
+
+For OTLP, point to your collector base URL (the proxy posts to `/v1/logs`):
+
+```bash
+velocity proxy --target ws://localhost:4000 --otlp-http-endpoint http://localhost:4318 --log-format json
+```
+
+## CI gate
+
+```bash
+npm run bench:ci
+npm run bench:certify
