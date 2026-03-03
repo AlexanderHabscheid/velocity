@@ -38,3 +38,43 @@ interface SessionParams {
   safety: {
     isTenantBreakerOpen: () => boolean;
     recordTenantBreach: () => { opened: boolean; openUntil?: number };
+  };
+  upstreamObserver?: {
+    onOpen?: () => void;
+    onClose?: () => void;
+    onError?: (reason: string) => void;
+    onLatency?: (latencyMs: number) => void;
+  };
+  onSignal?: (signal: NonNullable<FrameRecord["signal"]>, note?: string) => Promise<void>;
+}
+export function createProxySession(params: SessionParams): void {
+  const {
+    agentSocket,
+    targetUrl,
+    sessionId,
+    codec,
+    store,
+    options,
+    localCaps,
+    logger,
+    tenantId,
+    safety,
+    upstreamObserver,
+    onSignal,
+  } = params;
+  const targetSocket = new WebSocket(targetUrl, {
+    handshakeTimeout: Math.max(1, options.upstreamHandshakeTimeoutMs ?? 10000),
+    maxPayload: Math.max(1024, options.upstreamMaxPayloadBytes ?? 100 * 1024 * 1024),
+    perMessageDeflate: options.upstreamPerMessageDeflate ?? true,
+  }) as unknown as ProxySocket;
+  const safeMode = options.safeMode;
+  const maxInboundQueue = Math.max(1, options.maxInboundQueue);
+  const maxOutstandingBatches = Math.max(1, options.maxOutstandingBatches);
+  const maxSocketBackpressureBytes = Math.max(1024, options.maxSocketBackpressureBytes);
+  const rollback = new SessionRollbackController(options.rollbackBreachThreshold, options.rollbackWindowMs);
+  const controller = new AdaptiveBatchController({
+    initialWindowMs: safeMode ? Math.min(1, options.batchWindowMs) : options.batchWindowMs,
+    minWindowMs: options.minBatchWindowMs,
+    maxWindowMs: safeMode ? Math.min(2, options.maxBatchWindowMs) : options.maxBatchWindowMs,
+    latencyBudgetMs: options.latencyBudgetMs,
+  });
