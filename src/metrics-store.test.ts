@@ -38,3 +38,19 @@ test("metrics store tracks overflow and backpressure signals", () => {
   });
 
   store.recordSignal("policy-denied", "acme");
+  store.recordSignal("rate-limit-denied", "acme");
+  store.recordSignal("auth-rejected", "acme");
+  store.recordSignal("authz-denied", "acme");
+
+  const loaded = store.load();
+  assert.equal(loaded.queueOverflowEvents, 1);
+  assert.equal(loaded.backpressureEvents, 1);
+  assert.equal(loaded.policyDeniedEvents, 1);
+  assert.equal(loaded.rateLimitDeniedEvents, 1);
+  assert.equal(loaded.authRejectedEvents, 1);
+  assert.equal(loaded.authzDeniedEvents, 1);
+  assert.equal(loaded.perTenant.acme.totalFramesRaw, 0);
+  assert.equal(loaded.perTenant.acme.totalFramesSent, 2);
+  assert.equal(loaded.perTenant.acme.policyDeniedEvents, 1);
+  assert.equal(loaded.latencyHistogram["+Inf"] ?? 0, 0);
+});

@@ -38,3 +38,27 @@ const DEFAULT_METRICS: AggregateMetrics = {
 };
 
 const EMPTY_TENANT_METRICS: TenantAggregateMetrics = {
+  totalFramesRaw: 0,
+  totalFramesSent: 0,
+  totalBytesRaw: 0,
+  totalBytesSent: 0,
+  latencySamples: 0,
+  latencyMsTotal: 0,
+  loopTurnSamples: 0,
+  loopTurnMsTotal: 0,
+  toolRoundtripSamples: 0,
+  toolRoundtripMsTotal: 0,
+  framesPerTurnSamples: 0,
+  framesPerTurnTotal: 0,
+  queueDelaySamples: 0,
+  queueDelayMsTotal: 0,
+  queueOverflowEvents: 0,
+  backpressureEvents: 0,
+  tenantBreakerOpenEvents: 0,
+  sessionRollbackEvents: 0,
+  policyDeniedEvents: 0,
+  rateLimitDeniedEvents: 0,
+  authRejectedEvents: 0,
+  authzDeniedEvents: 0,
+};
+
