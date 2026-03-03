@@ -78,3 +78,34 @@ class VelocityControlClient:
         )
 
     def check_tenant_rate_limit(
+        self,
+        tenant_id: str,
+        rate_limit_rps: Optional[int] = None,
+    ) -> TenantRateLimitDecision:
+        tenant = urllib.parse.quote(tenant_id, safe="")
+        payload = {}
+        if rate_limit_rps is not None:
+            payload["rateLimitRps"] = rate_limit_rps
+        raw = self._request(
+            f"/v1/tenants/{tenant}/rate-limit/check",
+            method="POST",
+            body=payload,
+        )
+        return TenantRateLimitDecision(
+            allow=raw["allow"],
+            remaining_tokens=raw["remainingTokens"],
+            updated_at=raw["updatedAt"],
+        )
+
+    def get_runtime_profile(self) -> RuntimeProfile:
+        raw = self._request("/v1/runtime/profile", method="GET")
+        return RuntimeProfile(
+            batch_window_ms=raw["batchWindowMs"],
+            min_batch_window_ms=raw["minBatchWindowMs"],
+            max_batch_window_ms=raw["maxBatchWindowMs"],
+            latency_budget_ms=raw["latencyBudgetMs"],
+            batch_max_messages=raw["batchMaxMessages"],
+            batch_max_bytes=raw["batchMaxBytes"],
+            enable_zstd=raw["enableZstd"],
+            enable_delta=raw["enableDelta"],
+            safe_mode=raw["safeMode"],

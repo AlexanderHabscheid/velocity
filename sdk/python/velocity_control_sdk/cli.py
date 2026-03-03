@@ -59,3 +59,12 @@ def main() -> None:
                 enable_delta=None if args.enable_delta is None else args.enable_delta == "true",
                 safe_mode=None if args.safe_mode is None else args.safe_mode == "true",
                 enable_passthrough_merge=None if args.enable_passthrough_merge is None else args.enable_passthrough_merge == "true",
+            )
+        )
+        return
+    enabled = None if args.enabled is None else args.enabled == "true"
+    print(client.put_tenant_policy(args.tenant_id, enabled=enabled, rate_limit_rps=args.rate_limit_rps))
+
+
+if __name__ == "__main__":
+    main()
