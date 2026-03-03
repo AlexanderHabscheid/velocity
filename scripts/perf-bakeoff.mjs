@@ -38,3 +38,10 @@ async function runWsRoundtrip(url, messages, payloadBytes) {
         socket.off('message', onMessage);
         reject(err);
       };
+      socket.once('message', onMessage);
+      socket.once('error', onError);
+    });
+  }
+
+  socket.close();
+  const avg = latencies.reduce((sum, v) => sum + v, 0) / Math.max(1, latencies.length);
