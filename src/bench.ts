@@ -21,3 +21,16 @@ export interface SingleBenchOptions {
   batchWindowMs: number;
   minBatchWindowMs: number;
   maxBatchWindowMs: number;
+  latencyBudgetMs: number;
+  serverDelayMs: number;
+  jitterMs: number;
+  maxP95DeltaMs: number;
+  maxAvgDeltaMs: number;
+  minFrameReductionPct: number;
+  minByteReductionPct: number;
+}
+
+export async function runBench(options: SingleBenchOptions): Promise<void> {
+  const profile: BenchProfile = {
+    name: "single",
+    messages: options.messages,
