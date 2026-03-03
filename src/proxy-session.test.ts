@@ -38,3 +38,43 @@ test("proxy closes session when inbound queue exceeds limit", async () => {
     batchWindowMs: 100,
     batchMaxMessages: 64,
     batchMaxBytes: 131072,
+    minBatchWindowMs: 0,
+    maxBatchWindowMs: 100,
+    latencyBudgetMs: 40,
+    enableZstd: false,
+    zstdMinBytes: 512,
+    zstdMinGainRatio: 0.03,
+    enableZstdDictionary: false,
+    zstdDictionaryMinBytes: 1024,
+    enableProtobuf: false,
+    enableDelta: false,
+    structuredDeltaTypes: [],
+    autoFallback: true,
+    enableNegotiation: false,
+    negotiationTimeoutMs: 25,
+    enablePassthroughMerge: true,
+    safeMode: false,
+    breakerThreshold: 3,
+    breakerWindowMs: 30000,
+    breakerCooldownMs: 60000,
+    rollbackBreachThreshold: 3,
+    rollbackWindowMs: 15000,
+    maxInboundQueue: 2,
+    maxOutstandingBatches: 32,
+    maxSocketBackpressureBytes: 1024 * 1024,
+    logFormat: "text",
+    otlpHttpEndpoint: undefined,
+    otlpIntervalMs: 10000,
+    otlpServiceName: "velocity-test",
+    metricsHost: "127.0.0.1",
+    metricsPort: 0,
+    traceDir: path.join(os.tmpdir(), `velocity-test-${Date.now()}`),
+  });
+
+  const agent = new WebSocket(`ws://127.0.0.1:${proxyPort}`);
+  await new Promise<void>((resolve, reject) => {
+    agent.once("open", () => resolve());
+    agent.once("error", (err) => reject(err));
+  });
+
+  for (let i = 0; i < 10; i += 1) {
