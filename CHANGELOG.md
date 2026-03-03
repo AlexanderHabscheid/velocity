@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
 - Kubernetes and compose deployment assets use pinned images and stronger runtime hardening defaults.
 - Bench certification now supports an absolute p95 regression slack floor to reduce low-ms noise flake.
 - JWT auth runtime dependency (`jose`) is now included in default CLI dependencies.
+- npm package scopes now use `@velocityai` for CLI and TypeScript SDK distribution.
+- Required-gate Autobahn job now patches missing `_version` module from upstream package release to keep CI stable.
 
 ### Notes
 - Baseline benchmark report updated for byte-reduction certification.

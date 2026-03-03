@@ -1,5 +1,5 @@
 {
-  "name": "@velocity-ai/control-plane-sdk",
+  "name": "@velocityai/control-plane-sdk",
   "version": "0.1.0",
   "description": "TypeScript SDK for Velocity control-plane APIs",
   "license": "MIT",
@@ -16,6 +16,9 @@
     "dist/",
     "README.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc -p tsconfig.json",

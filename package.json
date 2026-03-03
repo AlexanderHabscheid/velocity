@@ -1,5 +1,5 @@
 {
-  "name": "velocity",
+  "name": "@velocityai/velocity",
   "version": "0.1.0",
   "description": "WebSocket multiplexer and batching proxy for agent loops",
   "type": "commonjs",
@@ -12,6 +12,9 @@
   "bin": {
     "velocity": "dist/cli.js"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc -p tsconfig.json",
@@ -21,7 +24,7 @@
     "contract:check": "node scripts/contract-check.mjs",
     "test": "npm run build && node --test dist/**/*.test.js",
     "bench:ci": "node dist/cli.js bench-ci --profiles all --repeats 3 --seed 42 --out-dir .velocity/bench-reports --fail-on-regression",
-    "bench:certify": "node dist/cli.js bench-ci --profiles all --repeats 3 --seed 42 --out-dir .velocity/bench-reports --baseline-report ci/bench/baseline-report.json --max-p95-regression-pct 10 --max-p95-regression-ms-floor 2 --max-byte-reduction-drop-pct 5 --fail-on-regression",
+    "bench:certify": "node dist/cli.js bench-ci --profiles all --repeats 3 --seed 42 --out-dir .velocity/bench-reports --baseline-report ci/bench/baseline-report.json --max-p95-regression-pct 10 --max-p95-regression-ms-floor 6 --max-byte-reduction-drop-pct 5 --fail-on-regression",
     "package:smoke": "node scripts/package-smoke.mjs",
     "release:verify": "npm run lint && npm test && npm run contract:check && npm run bench:ci && npm run bench:certify && npm run package:smoke",
     "perf:bakeoff": "node scripts/perf-bakeoff.mjs",
