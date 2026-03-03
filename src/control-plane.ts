@@ -201,3 +201,17 @@ export function startControlPlaneWithOptions(options: ControlPlaneOptions): Prom
 
 async function startStore(options: ControlPlaneOptions): Promise<ControlPlaneStore> {
   const baseStore: ControlPlaneStore = options.storeEngine === "sqlite"
+    ? await SqliteControlPlaneStore.create(options.dbPath)
+    : new JsonControlPlaneStore(options.stateFile);
+  if (options.valkeyUrl && options.valkeyUrl.trim()) {
+    return ValkeyRateLimitStore.create(baseStore, options.valkeyUrl);
+  }
+  return baseStore;
+}
+
+async function startEventBus(options: ControlPlaneOptions): Promise<VelocityEventBus> {
+  if (options.natsUrl && options.natsUrl.trim()) {
+    return NatsEventBus.create(options.natsUrl, options.eventSubjectPrefix || "velocity.events");
+  }
+  return new NoopEventBus();
+}

@@ -195,3 +195,29 @@ async function startUwsListener(options: ListenerOptions): Promise<ListenerHandl
         { requestContext },
         req.getHeader("sec-websocket-key"),
         req.getHeader("sec-websocket-protocol"),
+        req.getHeader("sec-websocket-extensions"),
+        context,
+      );
+    },
+    open: (rawSocket: any) => {
+      const adapter = new UwsSocketAdapter(rawSocket);
+      socketMap.set(rawSocket, adapter);
+      const requestContext = toRequestContext(rawSocket);
+      void Promise.resolve(options.onConnection(adapter, {
+        url: requestContext.url,
+        headers: requestContext.headers,
+        remoteAddress: requestContext.remoteAddress,
+      })).catch((err) => {
+        options.logger.warn("listener connection handler failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        adapter.close(1011, "listener_error");
+      });
+    },
+    message: (rawSocket: any, message: ArrayBuffer, isBinary: boolean) => {
+      const adapter = socketMap.get(rawSocket);
+      if (!adapter) {
+        return;
+      }
+      adapter.emit("message", Buffer.from(message), isBinary);
+    },
