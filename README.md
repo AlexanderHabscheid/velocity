@@ -223,3 +223,39 @@ This check verifies operation coverage across:
 - `sdk/typescript/src/index.ts`
 - `sdk/python/velocity_control_sdk/client.py`
 - `sdk/python/velocity_control_sdk/cli.py`
+
+## SDK packaging
+
+- TypeScript SDK package: `sdk/typescript/package.json` (`@velocity-ai/control-plane-sdk`)
+- Python SDK package: `sdk/python/pyproject.toml` (`velocity-control-sdk`)
+- Python CLI entrypoint: `velocity-control`
+
+Build locally:
+
+```bash
+(cd sdk/typescript && npm install && npm run build)
+(cd sdk/python && python -m pip install build && python -m build)
+```
+
+## Release
+
+Tagged releases (`v*`) trigger `.github/workflows/release.yml`:
+- verify gates (`npm run release:verify`)
+- publish CLI to npm
+- publish TypeScript SDK to npm
+- publish Python SDK to PyPI
+- publish container image to GHCR
+
+Go-live runbook: `docs/go-live-checklist.md`.
+
+## Deployment tiers
+
+- Tier 1 (single node): run `velocity proxy` + `velocity control-plane` with JSON store.
+- Tier 2 (HA cluster): Kubernetes manifests in `deploy/k8s/` with OPA + OTel + HPA.
+- Tier 3 (enterprise edge): add Envoy fronting and policy/auth integrations using `deploy/envoy/` + control-plane APIs.
+
+## Latency objective
+
+VELOCITY is designed to **reduce end-to-end latency**, not just frame count. The adaptive fallback disables batching for a cooldown period when queue delay exceeds a threshold relative to observed round-trip time.
+
+Metrics and traces are stored in `.velocity/` by default.
