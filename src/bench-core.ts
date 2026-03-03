@@ -109,3 +109,34 @@ function sleep(ms: number): Promise<void> {
 }
 
 function percentile(values: number[], p: number): number {
+  if (values.length === 0) {
+    return 0;
+  }
+  const sorted = [...values].sort((a, b) => a - b);
+  const idx = Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * p));
+  return sorted[idx];
+}
+
+function average(values: number[]): number {
+  if (values.length === 0) {
+    return 0;
+  }
+  return values.reduce((sum, v) => sum + v, 0) / values.length;
+}
+
+function createPayload(length: number): string {
+  const unit = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let out = "";
+  while (out.length < length) {
+    out += unit;
+  }
+  return out.slice(0, length);
+}
+
+function parseJsonMessage(data: WebSocket.RawData): { id: number } | null {
+  const text = Buffer.isBuffer(data)
+    ? data.toString("utf8")
+    : Array.isArray(data)
+      ? Buffer.concat(data.map((c) => (Buffer.isBuffer(c) ? c : Buffer.from(c)))).toString("utf8")
+      : Buffer.from(data).toString("utf8");
+

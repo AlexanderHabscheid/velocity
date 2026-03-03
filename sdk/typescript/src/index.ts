@@ -81,3 +81,12 @@ export class VelocityControlClient {
       body: JSON.stringify(body),
     });
   }
+
+  private async request<T>(path: string, init: RequestInit): Promise<T> {
+    const res = await fetch(`${this.baseUrl.replace(/\/$/, "")}${path}`, init);
+    if (!res.ok) {
+      throw new Error(`control-plane request failed: ${res.status}`);
+    }
+    return await res.json() as T;
+  }
+}
