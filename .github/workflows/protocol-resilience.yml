@@ -42,3 +42,43 @@ jobs:
       - name: Upload Autobahn report
         if: always()
         uses: actions/upload-artifact@v4
+        with:
+          name: autobahn-report
+          path: .velocity/autobahn
+
+  k6:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Start k6 target
+        run: node scripts/k6-ws-target.mjs > /tmp/k6-target.log &
+
+      - name: Read target URL
+        run: cat /tmp/k6-target.log
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run k6 websocket load
+        run: |
+          export K6_WS_TARGET=$(awk -F= '/K6_WS_TARGET/{print $2}' /tmp/k6-target.log)
+          k6 run ci/k6/ws-load.js
+
+  toxiproxy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
