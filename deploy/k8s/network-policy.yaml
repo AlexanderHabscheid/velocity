@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: velocity-default-deny
+  namespace: velocity
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: velocity-proxy-allow
+  namespace: velocity
+spec:
+  podSelector:
+    matchLabels:
+      app: velocity-proxy
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 4100
+        - protocol: TCP
+          port: 9464
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: velocity-control-plane
+      ports:
+        - protocol: TCP
+          port: 4200
+    - to:
+        - podSelector:
+            matchLabels:
