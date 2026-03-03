@@ -142,3 +142,24 @@ jobs:
       - name: Run k6 websocket load
         run: K6_WS_TARGET=ws://127.0.0.1:9191 k6 run ci/k6/ws-load.js
 
+  toxiproxy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Start Toxiproxy
+        run: docker run -d --rm --name toxiproxy -p 8474:8474 -p 8666:8666 shopify/toxiproxy
+      - name: Toxiproxy smoke
+        run: npm run toxiproxy:smoke
+      - name: Stop Toxiproxy
+        if: always()
+        run: docker stop toxiproxy
+
