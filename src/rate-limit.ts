@@ -38,3 +38,25 @@ export class ControlPlaneTenantRateLimiter implements TenantRateLimiter {
     try {
       const url = `${this.endpoint.replace(/\/+$/, "")}/v1/tenants/${encodeURIComponent(tenantId)}/rate-limit/check`;
       const resp = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ rateLimitRps: rps }),
+        signal: controller.signal,
+      });
+      if (!resp.ok) {
+        this.logger.warn("remote rate-limit check failed", { tenantId, status: resp.status, url });
+        return this.failOpen;
+      }
+      const body = await resp.json() as { allow?: boolean };
+      return body.allow !== false;
+    } catch (err) {
+      this.logger.warn("remote rate-limit check error", {
+        tenantId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return this.failOpen;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+}

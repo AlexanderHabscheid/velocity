@@ -38,3 +38,7 @@ export function replayTrace(tracePath: string): void {
   const avgLatency = latencies.length > 0 ? latencies.reduce((s, v) => s + v, 0) / latencies.length : 0;
 
   console.log("summary");
+  console.log(`frame reduction: ${rawFrames - sentFrames}/${rawFrames}`);
+  console.log(`byte reduction: ${rawBytes - sentBytes}/${rawBytes}`);
+  console.log(`latency avg: ${avgLatency.toFixed(2)}ms`);
+}

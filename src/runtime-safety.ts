@@ -38,3 +38,17 @@ export class TenantCircuitBreakerRegistry {
     return { opened: !wasOpen && isOpen, openUntil: isOpen ? state.openUntil : undefined };
   }
 }
+
+export class SessionRollbackController {
+  private readonly threshold: number;
+  private readonly windowMs: number;
+  private breaches: number[] = [];
+  private rolledBack = false;
+
+  constructor(threshold: number, windowMs: number) {
+    this.threshold = threshold;
+    this.windowMs = windowMs;
+  }
+
+  recordGuardBreach(): { rollback: boolean } {
+    if (this.rolledBack) {
