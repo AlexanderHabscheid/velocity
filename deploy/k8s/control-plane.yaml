@@ -51,3 +51,43 @@ spec:
             - name: control-plane-state
               mountPath: /var/lib/velocity
           resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 4200
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 4200
+            initialDelaySeconds: 8
+            periodSeconds: 10
+      volumes:
+        - name: control-plane-state
+          persistentVolumeClaim:
+            claimName: velocity-control-plane-state
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: velocity-control-plane
+  namespace: velocity
+spec:
+  selector:
+    app: velocity-control-plane
+  ports:
+    - port: 4200
+      targetPort: 4200
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: velocity-control-plane-state
+  namespace: velocity
