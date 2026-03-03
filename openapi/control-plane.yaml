@@ -81,3 +81,43 @@ paths:
             schema:
               $ref: '#/components/schemas/TenantPolicyUpdate'
       responses:
+        '200':
+          description: Tenant policy updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantPolicy'
+  /v1/tenants/{tenantId}/rate-limit/check:
+    post:
+      operationId: checkTenantRateLimit
+      parameters:
+        - in: path
+          name: tenantId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantRateLimitCheckRequest'
+      responses:
+        '200':
+          description: Rate limit decision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantRateLimitCheckResponse'
+components:
+  schemas:
+    TenantPolicy:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        enabled:
+          type: boolean
+        rateLimitRps:
+          type: integer
+          minimum: 1
