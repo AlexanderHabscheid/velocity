@@ -78,3 +78,43 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
     batchWindowMs: options.batchWindowMs,
   };
 
+  const store = new MetricsStore(options.traceDir);
+  const upstreamPool = options.targetPool && options.targetPool.targets.length > 0
+    ? new UpstreamPool(options.targetPool, logger)
+    : null;
+  upstreamPool?.start();
+  const eventBus: VelocityEventBus = options.eventBus?.natsUrl
+    ? await NatsEventBus.create(options.eventBus.natsUrl, options.eventBus.subjectPrefix)
+    : new NoopEventBus();
+  const publishEvent = async (topic: string, payload: Record<string, unknown>): Promise<void> => {
+    try {
+      await eventBus.publish(topic, payload);
+    } catch (err) {
+      logger.warn("velocity event publish failed", {
+        topic,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  };
+  const breakers = new TenantCircuitBreakerRegistry({
+    threshold: options.breakerThreshold,
+    windowMs: options.breakerWindowMs,
+    cooldownMs: options.breakerCooldownMs,
+  });
+  const rateLimiter: TenantRateLimiter = options.rateLimit?.controlPlaneEndpoint
+    ? new ControlPlaneTenantRateLimiter(
+      options.rateLimit.controlPlaneEndpoint,
+      options.rateLimit.timeoutMs,
+      options.rateLimit.failOpen,
+      logger,
+    )
+    : new LocalTenantRateLimiter();
+  let runtimeProfileOverride: RuntimeProfileOverride | null = null;
+  let runtimePollTimer: NodeJS.Timeout | null = null;
+  if (options.runtimeControlPlaneEndpoint?.trim()) {
+    const poll = async (): Promise<void> => {
+      try {
+        const resp = await fetch(`${options.runtimeControlPlaneEndpoint}/v1/runtime/profile`);
+        if (!resp.ok) {
+          return;
+        }
