@@ -78,3 +78,24 @@ export function createProxySession(params: SessionParams): void {
     maxWindowMs: safeMode ? Math.min(2, options.maxBatchWindowMs) : options.maxBatchWindowMs,
     latencyBudgetMs: options.latencyBudgetMs,
   });
+  const hardGuard = new LatencyGuard({
+    latencyBudgetMs: options.latencyBudgetMs,
+    breachFactor: safeMode ? 1.0 : 1.1,
+    recoveryFactor: safeMode ? 0.8 : 0.9,
+    minSamples: safeMode ? 12 : 24,
+    cooldownMs: safeMode ? 4000 : 2000,
+  });
+  const priorityQueue: PendingInbound[] = [];
+  const normalQueue: PendingInbound[] = [];
+  let priorityQueuedBytes = 0;
+  let normalQueuedBytes = 0;
+  const coalescer = new SemanticCoalescer(maxOutstandingBatches);
+  const outstanding: OutstandingBatch[] = [];
+  let outstandingHead = 0;
+  let flushTimer: NodeJS.Timeout | null = null;
+  let mode: UpstreamMode = options.enableNegotiation ? "unknown" : "velocity";
+  let negotiationTimer: NodeJS.Timeout | null = null;
+  let heartbeatTimer: NodeJS.Timeout | null = null;
+  let tornDown = false;
+  let upstreamReleased = false;
+  let upstreamOpened = false;

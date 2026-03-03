@@ -78,3 +78,22 @@ test("proxy closes session when inbound queue exceeds limit", async () => {
   });
 
   for (let i = 0; i < 10; i += 1) {
+    agent.send(JSON.stringify({ jsonrpc: "2.0", id: i, method: "tool.call", params: { x: i } }));
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error("expected proxy to close overflowing session")), 2000);
+    agent.once("close", () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+    agent.once("error", (err) => {
+      clearTimeout(timeout);
+      reject(err);
+    });
+  });
+
+  await proxy.close();
+  await new Promise<void>((resolve, reject) => upstream.close((err) => (err ? reject(err) : resolve())));
+  assert.ok(true);
+});
