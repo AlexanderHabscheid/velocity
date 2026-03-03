@@ -38,3 +38,43 @@ function writeVarintField(field: number, value: number): Buffer {
   return Buffer.concat([writeTag(field, WIRE_VARINT), encodeVarint(value)]);
 }
 
+function writeBoolField(field: number, value: boolean): Buffer {
+  return writeVarintField(field, value ? 1 : 0);
+}
+
+function writeStringField(field: number, value: string): Buffer {
+  const body = Buffer.from(value, "utf8");
+  return Buffer.concat([writeTag(field, WIRE_LEN), encodeVarint(body.length), body]);
+}
+
+function writeBytesField(field: number, value: Uint8Array): Buffer {
+  const body = Buffer.from(value);
+  return Buffer.concat([writeTag(field, WIRE_LEN), encodeVarint(body.length), body]);
+}
+
+function skipField(data: Uint8Array, wireType: number, offset: number): number | null {
+  if (wireType === 0) {
+    const parsed = decodeVarint(data, offset);
+    return parsed?.next ?? null;
+  }
+  if (wireType === 1) {
+    return offset + 8 <= data.length ? offset + 8 : null;
+  }
+  if (wireType === 2) {
+    const len = decodeVarint(data, offset);
+    if (!len) {
+      return null;
+    }
+    const next = len.next + len.value;
+    return next <= data.length ? next : null;
+  }
+  if (wireType === 5) {
+    return offset + 4 <= data.length ? offset + 4 : null;
+  }
+  return null;
+}
+
+function decodeLen(data: Uint8Array, offset: number): { value: Uint8Array; next: number } | null {
+  const len = decodeVarint(data, offset);
+  if (!len) {
+    return null;
