@@ -102,3 +102,12 @@ export class MetricsStore {
     return {
       ...this.metrics,
       latencyMsP95Window: [...this.metrics.latencyMsP95Window],
+      queueDelayMsP95Window: [...this.metrics.queueDelayMsP95Window],
+      latencyHistogram: { ...this.metrics.latencyHistogram },
+      perTenant: Object.fromEntries(
+        Object.entries(this.metrics.perTenant ?? {}).map(([tenantId, stats]) => [tenantId, { ...stats }]),
+      ),
+    };
+  }
+
+  private getTenantMetrics(tenantId: string): TenantAggregateMetrics {

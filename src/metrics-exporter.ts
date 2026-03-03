@@ -79,3 +79,34 @@ export function startMetricsExporter(store: MetricsStore, host: string, port: nu
         `velocity_loop_turn_avg_ms ${ratio(m.loopTurnMsTotal, m.loopTurnSamples)}`,
         "# TYPE velocity_tool_roundtrip_avg_ms gauge",
         `velocity_tool_roundtrip_avg_ms ${ratio(m.toolRoundtripMsTotal, m.toolRoundtripSamples)}`,
+        "# TYPE velocity_frames_per_turn_avg gauge",
+        `velocity_frames_per_turn_avg ${ratio(m.framesPerTurnTotal, m.framesPerTurnSamples)}`,
+        "# TYPE velocity_queue_delay_avg_ms gauge",
+        `velocity_queue_delay_avg_ms ${ratio(m.queueDelayMsTotal, m.queueDelaySamples)}`,
+        "# TYPE velocity_latency_ms histogram",
+        ...histogramLines,
+        `velocity_latency_ms_bucket{le=\"+Inf\"} ${inf}`,
+        `velocity_latency_ms_sum ${m.latencyMsTotal}`,
+        `velocity_latency_ms_count ${m.latencySamples}`,
+        "# TYPE velocity_frame_reduction_ratio gauge",
+        `velocity_frame_reduction_ratio ${ratio(m.totalFramesRaw - m.totalFramesSent, m.totalFramesRaw)}`,
+        "# TYPE velocity_byte_reduction_ratio gauge",
+        `velocity_byte_reduction_ratio ${ratio(m.totalBytesRaw - m.totalBytesSent, m.totalBytesRaw)}`,
+      ];
+
+      res.statusCode = 200;
+      res.setHeader("content-type", "text/plain; version=0.0.4; charset=utf-8");
+      res.end(`${lines.join("\n")}\n`);
+    });
+
+    server.once("error", (err) => reject(err));
+    server.listen(port, host, () => {
+      resolve({
+        close: async () =>
+          new Promise<void>((closeResolve, closeReject) => {
+            server.close((err) => (err ? closeReject(err) : closeResolve()));
+          }),
+      });
+    });
+  });
+}
