@@ -271,3 +271,43 @@ function encodeDeltaPatch(patch: NonNullable<VelocityEnvelope["deltaPatch"]>): B
   for (const [key, value] of Object.entries(patch.set ?? {})) {
     const encoded = JSON.stringify(value);
     if (typeof encoded !== "string") {
+      continue;
+    }
+    const entry = Buffer.concat([writeStringField(1, key), writeStringField(2, encoded)]);
+    parts.push(writeBytesField(7, entry));
+  }
+  return Buffer.concat(parts);
+}
+
+function decodeDeltaPatch(data: Uint8Array): NonNullable<VelocityEnvelope["deltaPatch"]> | null {
+  const out: NonNullable<VelocityEnvelope["deltaPatch"]> = {
+    mode: "text",
+    prefix: 0,
+    suffix: 0,
+    changed: "",
+  };
+  let offset = 0;
+  while (offset < data.length) {
+    const tag = decodeVarint(data, offset);
+    if (!tag) {
+      return null;
+    }
+    offset = tag.next;
+    const field = tag.value >> 3;
+    const wire = tag.value & 0x7;
+    if ((field === 1 || field === 2 || field === 3) && wire === WIRE_VARINT) {
+      const v = decodeVarint(data, offset);
+      if (!v) {
+        return null;
+      }
+      if (field === 1) {
+        out.mode = v.value === 2 ? "structured" : "text";
+      } else if (field === 2) {
+        out.prefix = v.value;
+      } else {
+        out.suffix = v.value;
+      }
+      offset = v.next;
+      continue;
+    }
+    if ((field === 4 || field === 5 || field === 6) && wire === WIRE_LEN) {
