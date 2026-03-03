@@ -78,3 +78,43 @@ export interface ProxyOptions {
   authn?: {
     required: boolean;
     jwksUrl: string;
+    issuer?: string;
+    audience?: string;
+  };
+  authz?: {
+    endpoint: string;
+    storeId: string;
+    modelId?: string;
+    relation: string;
+    objectPrefix: string;
+    userClaim: string;
+    failOpen: boolean;
+    token?: string;
+    timeoutMs: number;
+  };
+  eventBus?: {
+    natsUrl: string;
+    subjectPrefix: string;
+  };
+  runtimeControlPlaneEndpoint?: string;
+  runtimeControlPlanePollMs?: number;
+  traceDir?: string;
+}
+
+export interface FrameRecord {
+  ts: string;
+  sessionId: string;
+  tenantId?: string;
+  metricsOnly?: boolean;
+  direction: Direction;
+  bytesRaw: number;
+  bytesSent: number;
+  batchedCount: number;
+  compressed: boolean;
+  delta: boolean;
+  queueDelayMs: number;
+  latencyMs?: number;
+  loopTurnMs?: number;
+  toolRoundtripMs?: number;
+  framesPerTurn?: number;
+  note?: string;
