@@ -78,3 +78,24 @@ spec:
               path: /health
               port: 8181
             initialDelaySeconds: 8
+            periodSeconds: 10
+          volumeMounts:
+            - name: policy
+              mountPath: /policy
+              readOnly: true
+      volumes:
+        - name: policy
+          configMap:
+            name: velocity-opa-policy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: velocity-opa
+  namespace: velocity
+spec:
+  selector:
+    app: velocity-opa
+  ports:
+    - port: 8181
+      targetPort: 8181

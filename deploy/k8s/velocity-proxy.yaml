@@ -47,3 +47,10 @@ spec:
             - 0.0.0.0
             - --metrics-port
             - "9464"
+            - --opa-endpoint
+            - http://velocity-opa.velocity.svc.cluster.local:8181
+            - --opa-path
+            - velocity/allow
+            - --rate-limit-control-plane-endpoint
+            - http://velocity-control-plane.velocity.svc.cluster.local:4200
+            - --nats-url
