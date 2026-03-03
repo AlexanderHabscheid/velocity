@@ -202,3 +202,19 @@ export function printStatsWithOptions(store: MetricsStore, options: PrintStatsOp
     advice.push("evaluate --latency-budget-ms and batching window bounds for safer adaptive behavior");
   }
   if (p95QueueDelayMs > 5) {
+    advice.push("queue delay p95 is above 5ms; lower batch window or use --performance-profile low-latency");
+  }
+  if (m.authRejectedEvents > 0 || m.authzDeniedEvents > 0) {
+    advice.push("verify JWT issuer/audience and OpenFGA relation/object mapping");
+  }
+  printAdvice(advice);
+
+  if (options.verbose) {
+    const recent = listRecentTraces(store, 5);
+    console.log("");
+    console.log("recent traces:");
+    for (const trace of recent) {
+      console.log(`  ${path.basename(trace.file)} ${trace.sizeBytes}B`);
+    }
+  }
+}

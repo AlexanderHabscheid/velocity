@@ -199,3 +199,27 @@ The p95 certification guard uses both percentage and absolute-millisecond slack 
 `package:smoke` validates that the packed npm tarball installs and runs `velocity --version` and `velocity doctor` in a clean temp project.
 
 ## Advanced
+
+Advanced infra deployment assets are still available:
+
+- GitHub required checks: `.github/workflows/required-gate.yml`
+- OPA sample policy bundle: `deploy/opa/`
+- Docker/Kubernetes manifests: `deploy/docker-compose.prod.yml`, `deploy/k8s/`
+- HA add-ons for event/state infrastructure: `deploy/k8s/nats.yaml`, `deploy/k8s/valkey.yaml`
+- Control-plane OpenAPI + SDKs: `openapi/control-plane.yaml`, `sdk/`
+- Envoy edge config + JWT fronting reference: `deploy/envoy/`
+- OTel collector templates (service mode only): `deploy/otel/`
+
+## Contract checks
+
+Use the OpenAPI contract as the source of truth and validate SDK/CLI parity:
+
+```bash
+npm run contract:check
+```
+
+This check verifies operation coverage across:
+- `openapi/control-plane.yaml`
+- `sdk/typescript/src/index.ts`
+- `sdk/python/velocity_control_sdk/client.py`
+- `sdk/python/velocity_control_sdk/cli.py`
