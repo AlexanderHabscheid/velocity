@@ -472,3 +472,42 @@ export function decodeVelocityEnvelopeProto(data: Uint8Array): VelocityEnvelope 
       const v = decodeVarint(data, offset);
       if (!v) {
         return null;
+      }
+      out.sentAt = v.value;
+      offset = v.next;
+      continue;
+    }
+    if (field === 4 && wire === WIRE_LEN) {
+      const v = decodeLen(data, offset);
+      if (!v) {
+        return null;
+      }
+      out.frames.push(Buffer.from(v.value));
+      offset = v.next;
+      continue;
+    }
+    if (field === 6 && wire === WIRE_LEN) {
+      const v = decodeLen(data, offset);
+      if (!v) {
+        return null;
+      }
+      const control = decodeControl(v.value);
+      if (!control) {
+        return null;
+      }
+      out.control = control;
+      offset = v.next;
+      continue;
+    }
+    if (field === 7 && wire === WIRE_LEN) {
+      const v = decodeLen(data, offset);
+      if (!v) {
+        return null;
+      }
+      const patch = decodeDeltaPatch(v.value);
+      if (!patch) {
+        return null;
+      }
+      out.deltaPatch = patch;
+      offset = v.next;
+      continue;
