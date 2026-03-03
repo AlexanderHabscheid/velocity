@@ -474,3 +474,42 @@ export function createProxySession(params: SessionParams): void {
       flushTimer = null;
       await flushBatch();
       if (totalInboundQueued() > 0 && targetSocket.readyState === SOCKET_STATE.OPEN) {
+        scheduleFlush(1);
+      }
+    }, waitMs);
+  };
+  agentSocket.on("message", async (data) => {
+    if (totalInboundQueued() >= maxInboundQueue) {
+      emit({
+        ts: new Date().toISOString(),
+        sessionId,
+        direction: "agent->server",
+        bytesRaw: 0,
+        bytesSent: 0,
+        batchedCount: 0,
+        compressed: false,
+        delta: false,
+        queueDelayMs: 0,
+        note: `inbound-queue-overflow(limit=${maxInboundQueue})`,
+        signal: "queue-overflow",
+      });
+      teardown();
+      return;
+    }
+    const payload = toBuffer(data as WebSocket.RawData);
+    const maybeCoalesced = coalescer.shouldCoalesceRequest(payload);
+    if (maybeCoalesced.coalesced) {
+      emit({
+        ts: new Date().toISOString(),
+        sessionId,
+        direction: "agent->server",
+        bytesRaw: payload.length,
+        bytesSent: 0,
+        batchedCount: 1,
+        compressed: false,
+        delta: false,
+        queueDelayMs: 0,
+        note: maybeCoalesced.note,
+      });
+      return;
+    }
