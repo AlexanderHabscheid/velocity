@@ -158,3 +158,43 @@ export class UpstreamPool {
       healthy: state.healthy,
       ejectedUntilMs: state.ejectedUntilMs,
       consecutiveFailures: state.consecutiveFailures,
+    }));
+  }
+
+  private score(state: UpstreamTargetState): number {
+    const latency = state.ewmaLatencyMs ?? this.options.initialLatencyMs;
+    const connectionPenalty = state.activeConnections * this.options.connectionPenaltyMs;
+    const failurePenalty = state.consecutiveFailures * this.options.failurePenaltyMs;
+    const unhealthyPenalty = state.healthy ? 0 : this.options.unhealthyPenaltyMs;
+    return latency + connectionPenalty + failurePenalty + unhealthyPenalty;
+  }
+
+  private async probeTarget(url: string): Promise<void> {
+    await new Promise<void>((resolve) => {
+      const socket = new WebSocket(url, {
+        handshakeTimeout: this.options.probeTimeoutMs,
+        perMessageDeflate: false,
+      });
+      let done = false;
+      const finish = (ok: boolean, reason: string): void => {
+        if (done) {
+          return;
+        }
+        done = true;
+        if (ok) {
+          this.recordSuccess(url);
+        } else {
+          this.recordFailure(url, reason);
+        }
+        try {
+          socket.close();
+        } catch {
+          // ignore close races
+        }
+        resolve();
+      };
+      socket.once("open", () => finish(true, "probe-open"));
+      socket.once("error", (err) => finish(false, err instanceof Error ? err.message : "probe-error"));
+      socket.once("close", () => finish(false, "probe-close-before-open"));
+      setTimeout(() => finish(false, "probe-timeout"), this.options.probeTimeoutMs).unref();
+    });
