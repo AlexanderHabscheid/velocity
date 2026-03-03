@@ -1,0 +1,10 @@
+node_modules
+dist
+.velocity
+.git
+.github
+sdk
+openapi
+ci
+*.log
+.DS_Store
