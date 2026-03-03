@@ -38,3 +38,43 @@ export class CanaryPolicyManager {
   private readonly config: CanaryConfig;
   private readonly tenants = new Map<string, TenantCanaryState>();
 
+  constructor(config: CanaryConfig) {
+    this.config = config;
+    this.load();
+  }
+
+  onSessionStart(tenantId: string): CanaryDecision {
+    const now = Date.now();
+    let state = this.tenants.get(tenantId);
+    if (!state) {
+      const bucket = hashToPercent(tenantId);
+      state = {
+        safeMode: bucket < this.config.percent,
+        assignedAt: now,
+        sessions: 0,
+        breakerOpens: 0,
+      };
+      this.tenants.set(tenantId, state);
+    }
+
+    state.sessions += 1;
+    let promoted = false;
+    if (
+      state.safeMode &&
+      now - state.assignedAt >= this.config.promotionWindowMs &&
+      state.sessions >= this.config.minSessions &&
+      state.breakerOpens === 0
+    ) {
+      state.safeMode = false;
+      state.promotedAt = now;
+      promoted = true;
+    }
+
+    this.persist();
+    return { safeMode: state.safeMode, promoted, demoted: false };
+  }
+
+  recordBreakerOpen(tenantId: string): CanaryDecision {
+    const now = Date.now();
+    const state = this.tenants.get(tenantId) ?? {
+      safeMode: true,
