@@ -118,3 +118,36 @@ function decodeCapabilities(data: Uint8Array): NonNullable<VelocityEnvelope["con
     zstdDictionary: false,
     protobuf: false,
   };
+  let offset = 0;
+  while (offset < data.length) {
+    const tag = decodeVarint(data, offset);
+    if (!tag) {
+      return null;
+    }
+    offset = tag.next;
+    const field = tag.value >> 3;
+    const wire = tag.value & 0x7;
+    if (field === 1 && wire === WIRE_VARINT) {
+      const v = decodeVarint(data, offset);
+      if (!v) {
+        return null;
+      }
+      out.protocolVersion = v.value;
+      offset = v.next;
+      continue;
+    }
+    if (field >= 2 && field <= 6 && wire === WIRE_VARINT) {
+      const v = decodeVarint(data, offset);
+      if (!v) {
+        return null;
+      }
+      const bool = v.value !== 0;
+      if (field === 2) {
+        out.msgpack = bool;
+      } else if (field === 3) {
+        out.zstd = bool;
+      } else if (field === 4) {
+        out.delta = bool;
+      } else if (field === 5) {
+        out.batching = bool;
+      } else if (field === 6) {

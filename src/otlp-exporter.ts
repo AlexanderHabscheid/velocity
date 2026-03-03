@@ -116,3 +116,10 @@ export function startOtlpExporter(
 
   return {
     close: async () => {
+      clearInterval(interval);
+      if (inFlight) {
+        await inFlight;
+      }
+    },
+  };
+}
