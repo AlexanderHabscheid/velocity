@@ -482,3 +482,42 @@ program
     performanceProfile: string;
     logFormat: "text" | "json";
     otlpHttpEndpoint: string;
+    otlpIntervalMs: string;
+    otlpServiceName: string;
+    metricsHost: string;
+    metricsPort: string;
+    stateDir: string;
+    runtimeControlPlaneEndpoint: string;
+    runtimeControlPlanePollMs: string;
+    opaEndpoint: string;
+    opaPath: string;
+    opaTimeoutMs: string;
+    policyFailOpen: boolean;
+    rateLimitControlPlaneEndpoint: string;
+    rateLimitTimeoutMs: string;
+    rateLimitFailOpen: boolean;
+    jwtRequired: boolean;
+    jwtJwksUrl: string;
+    jwtIssuer: string;
+    jwtAudience: string;
+    openfgaEndpoint: string;
+    openfgaStoreId: string;
+    openfgaModelId: string;
+    openfgaRelation: string;
+    openfgaObjectPrefix: string;
+    openfgaUserClaim: string;
+    openfgaFailOpen: boolean;
+    openfgaToken: string;
+    openfgaTimeoutMs: string;
+    natsUrl: string;
+    eventSubjectPrefix: string;
+  }, command: Command) => {
+    const profile = resolvePerformanceProfile(opts.performanceProfile);
+    applyPerformanceProfile(opts as unknown as Record<string, OptionValue>, command, profile);
+    const poolTargets = parseTargetPool(opts.target, opts.targetPool);
+    await startProxy({
+      target: opts.target,
+      targetPool: poolTargets.length > 1
+        ? {
+          targets: poolTargets,
+          ewmaAlpha: Number(opts.targetPoolEwmaAlpha),
