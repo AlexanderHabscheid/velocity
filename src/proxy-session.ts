@@ -395,3 +395,43 @@ export function createProxySession(params: SessionParams): void {
           requeueInbound(entries.slice(idx));
           return;
         }
+        const entry = entries[idx];
+        const envelope: VelocityEnvelope = {
+          kind: "single",
+          id: randomUUID(),
+          sentAt: now,
+          frames: [entry.payload],
+          source: "velocity",
+        };
+        const encoded = await codec.serialize(envelope, { allowCompression: options.enableZstd });
+        targetSocket.send(encoded.buffer, { binary: true });
+        pushOutstanding({ sentAt: now, queueDelayMs, count: 1 });
+        emit({
+          ts: new Date().toISOString(),
+          sessionId,
+          direction: "agent->server",
+          bytesRaw: entry.payload.length,
+          bytesSent: encoded.buffer.length,
+          batchedCount: 1,
+          compressed: encoded.compressed,
+          delta: false,
+          queueDelayMs,
+          note: isSafetyForced()
+            ? "safety-forced-bypass"
+            : hardGuard.isGuarded()
+              ? "hard-guard-bypass"
+              : shouldBypass
+                ? "adaptive-bypass"
+                : "single",
+        });
+      }
+      return;
+    }
+    const envelope: VelocityEnvelope = {
+      kind: "batch",
+      id: randomUUID(),
+      sentAt: now,
+      frames: entries.map((x) => x.payload),
+      source: "velocity",
+    };
+    const encoded = await codec.serialize(envelope, { allowCompression: options.enableZstd });
