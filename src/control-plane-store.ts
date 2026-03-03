@@ -118,3 +118,43 @@ export class JsonControlPlaneStore implements ControlPlaneStore {
     } catch {
       return { policies: {}, buckets: {} };
     }
+  }
+
+  private persist(): void {
+    if (this.closed) {
+      return;
+    }
+    this.dirty = true;
+    if (this.flushTimer) {
+      return;
+    }
+    this.flushTimer = setTimeout(() => {
+      this.flushTimer = null;
+      void this.flush().catch((err) => {
+        this.persistError = err instanceof Error ? err : new Error(String(err));
+      });
+    }, this.flushDelayMs);
+    this.flushTimer.unref();
+  }
+
+  private flush(): Promise<void> {
+    if (this.flushPromise) {
+      return this.flushPromise;
+    }
+    this.flushPromise = (async () => {
+      while (this.dirty) {
+        this.dirty = false;
+        const serialized = `${JSON.stringify(this.state, null, 2)}\n`;
+        const tmp = `${this.absolutePath}.tmp`;
+        await fs.promises.writeFile(tmp, serialized, "utf8");
+        await fs.promises.rename(tmp, this.absolutePath);
+      }
+    })().finally(() => {
+      this.flushPromise = null;
+    });
+    return this.flushPromise;
+  }
+
+  async close(): Promise<void> {
+    this.closed = true;
+    if (this.flushTimer) {
