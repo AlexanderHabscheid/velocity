@@ -78,3 +78,43 @@ export class SemanticCoalescer {
     }
     const signature = computeSignature(req.method, req.params ?? null);
     const reqIdKey = idKey(req.id);
+    const existingPrimary = this.signatureToPrimary.get(signature);
+    if (existingPrimary && existingPrimary !== reqIdKey) {
+      const pending = this.primaryById.get(existingPrimary);
+      if (!pending) {
+        this.signatureToPrimary.delete(signature);
+        return { coalesced: false };
+      }
+      pending.duplicateIds.push(req.id);
+      return { coalesced: true, note: "semantic-coalesced-duplicate" };
+    }
+    if (!this.primaryById.has(reqIdKey)) {
+      this.primaryById.set(reqIdKey, { signature, duplicateIds: [] });
+      this.signatureToPrimary.set(signature, reqIdKey);
+      this.trimIfNeeded();
+    }
+    return { coalesced: false };
+  }
+
+  expandResponse(payload: Buffer): Buffer[] {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(payload.toString("utf8"));
+    } catch {
+      return [payload];
+    }
+    if (!parsed || typeof parsed !== "object") {
+      return [payload];
+    }
+    if (!Array.isArray(parsed)) {
+      if (!isJsonRpcResponse(parsed as Record<string, unknown>)) {
+        return [payload];
+      }
+      return this.expandResponseObject(parsed as Record<string, unknown>);
+    }
+
+    const out: Buffer[] = [];
+    let changed = false;
+    for (const item of parsed) {
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        out.push(Buffer.from(JSON.stringify(item), "utf8"));
