@@ -513,3 +513,33 @@ export function createProxySession(params: SessionParams): void {
       });
       return;
     }
+    const classified = classifyInbound(payload);
+    const entry: PendingInbound = { payload, enqueuedAt: Date.now(), lane: classified.lane, streaming: classified.streaming };
+    if (entry.lane === "priority") {
+      priorityQueue.push(entry);
+      priorityQueuedBytes += payload.length;
+    } else {
+      normalQueue.push(entry);
+      normalQueuedBytes += payload.length;
+    }
+    if (targetSocket.readyState === SOCKET_STATE.OPEN) {
+      scheduleFlush(shouldFlushImmediately() ? 0 : undefined);
+    }
+  });
+  targetSocket.on("open", async () => {
+    upstreamOpened = true;
+    upstreamObserver?.onOpen?.();
+    if (options.enableNegotiation) {
+      const hello = buildHello(localCaps, false);
+      const encoded = await codec.serialize(hello, { allowCompression: options.enableZstd });
+      helloId = hello.id;
+      localControlIds.add(hello.id);
+      targetSocket.send(encoded.buffer, { binary: true });
+      emit({
+        ts: new Date().toISOString(),
+        sessionId,
+        direction: "agent->server",
+        bytesRaw: encoded.buffer.length,
+        bytesSent: encoded.buffer.length,
+        batchedCount: 1,
+        compressed: encoded.compressed,

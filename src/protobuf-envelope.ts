@@ -511,3 +511,12 @@ export function decodeVelocityEnvelopeProto(data: Uint8Array): VelocityEnvelope 
       out.deltaPatch = patch;
       offset = v.next;
       continue;
+    }
+    const skipped = skipField(data, wire, offset);
+    if (skipped === null) {
+      return null;
+    }
+    offset = skipped;
+  }
+  return out.id ? out : null;
+}
