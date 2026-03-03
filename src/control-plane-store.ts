@@ -296,3 +296,43 @@ export class ValkeyRateLimitStore implements ControlPlaneStore {
   }
 
   async getTenantPolicy(tenantId: string): Promise<TenantPolicy> {
+    return this.base.getTenantPolicy(tenantId);
+  }
+
+  async putTenantPolicy(tenantId: string, update: { enabled?: boolean; rateLimitRps?: number }): Promise<TenantPolicy> {
+    return this.base.putTenantPolicy(tenantId, update);
+  }
+
+  async checkRateLimit(tenantId: string, rateLimitRps?: number): Promise<RateLimitDecision> {
+    const policy = await this.base.getTenantPolicy(tenantId);
+    const perSecond = Math.max(1, Math.floor(rateLimitRps ?? policy.rateLimitRps));
+    const nowMs = Date.now();
+    const key = `${this.keyPrefix}${tenantId}`;
+    const evalResult = await this.client.eval(
+      `
+      local key = KEYS[1]
+      local per_second = tonumber(ARGV[1])
+      local now_ms = tonumber(ARGV[2])
+      local tokens = tonumber(redis.call('HGET', key, 'tokens'))
+      local last_ms = tonumber(redis.call('HGET', key, 'last_ms'))
+      if not tokens then
+        tokens = per_second
+        last_ms = now_ms
+      end
+      local elapsed_seconds = math.max(0, (now_ms - last_ms) / 1000)
+      local refilled = math.min(per_second, tokens + elapsed_seconds * per_second)
+      local allow = 0
+      if refilled >= 1 then
+        allow = 1
+        refilled = refilled - 1
+      end
+      redis.call('HSET', key, 'tokens', refilled, 'last_ms', now_ms)
+      redis.call('PEXPIRE', key, 60000)
+      return { allow, tostring(refilled) }
+      `,
+      {
+        keys: [key],
+        arguments: [`${perSecond}`, `${nowMs}`],
+      },
+    ) as [number | string, string];
+
