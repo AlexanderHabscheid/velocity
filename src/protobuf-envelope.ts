@@ -231,3 +231,43 @@ function decodeControl(data: Uint8Array): NonNullable<VelocityEnvelope["control"
       ackFor = Buffer.from(v.value).toString("utf8");
       offset = v.next;
       continue;
+    }
+    if (field === 3 && wire === WIRE_LEN) {
+      const v = decodeLen(data, offset);
+      if (!v) {
+        return null;
+      }
+      capabilities = decodeCapabilities(v.value);
+      if (!capabilities) {
+        return null;
+      }
+      offset = v.next;
+      continue;
+    }
+    const skipped = skipField(data, wire, offset);
+    if (skipped === null) {
+      return null;
+    }
+    offset = skipped;
+  }
+  if (!capabilities) {
+    return null;
+  }
+  return { type, ackFor, capabilities };
+}
+
+function encodeDeltaPatch(patch: NonNullable<VelocityEnvelope["deltaPatch"]>): Buffer {
+  const parts: Buffer[] = [];
+  parts.push(writeVarintField(1, patch.mode === "structured" ? 2 : 1));
+  parts.push(writeVarintField(2, patch.prefix));
+  parts.push(writeVarintField(3, patch.suffix));
+  parts.push(writeStringField(4, patch.changed));
+  if (patch.structuredType) {
+    parts.push(writeStringField(5, patch.structuredType));
+  }
+  for (const item of patch.unset ?? []) {
+    parts.push(writeStringField(6, item));
+  }
+  for (const [key, value] of Object.entries(patch.set ?? {})) {
+    const encoded = JSON.stringify(value);
+    if (typeof encoded !== "string") {
