@@ -1,1 +1,4 @@
 name: velocity-protocol-resilience
+
+on:
+  push:
