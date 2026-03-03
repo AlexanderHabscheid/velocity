@@ -311,3 +311,43 @@ function decodeDeltaPatch(data: Uint8Array): NonNullable<VelocityEnvelope["delta
       continue;
     }
     if ((field === 4 || field === 5 || field === 6) && wire === WIRE_LEN) {
+      const v = decodeLen(data, offset);
+      if (!v) {
+        return null;
+      }
+      const text = Buffer.from(v.value).toString("utf8");
+      if (field === 4) {
+        out.changed = text;
+      } else if (field === 5) {
+        out.structuredType = text;
+      } else {
+        out.unset ??= [];
+        out.unset.push(text);
+      }
+      offset = v.next;
+      continue;
+    }
+    if (field === 7 && wire === WIRE_LEN) {
+      const entry = decodeLen(data, offset);
+      if (!entry) {
+        return null;
+      }
+      let entryKey = "";
+      let entryValue: unknown = null;
+      let inner = 0;
+      while (inner < entry.value.length) {
+        const innerTag = decodeVarint(entry.value, inner);
+        if (!innerTag) {
+          return null;
+        }
+        inner = innerTag.next;
+        const innerField = innerTag.value >> 3;
+        const innerWire = innerTag.value & 0x7;
+        if ((innerField === 1 || innerField === 2) && innerWire === WIRE_LEN) {
+          const val = decodeLen(entry.value, inner);
+          if (!val) {
+            return null;
+          }
+          const str = Buffer.from(val.value).toString("utf8");
+          if (innerField === 1) {
+            entryKey = str;
