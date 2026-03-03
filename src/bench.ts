@@ -74,3 +74,43 @@ function getProfiles(selection: string): BenchProfile[] {
   return wanted.map((name) => {
     const match = byName.get(name);
     if (!match) {
+      throw new Error(`unknown profile: ${name}`);
+    }
+    return match;
+  });
+}
+
+export async function runBenchCi(options: BenchCiOptions): Promise<void> {
+  const profiles = getProfiles(options.profiles);
+  const results: BenchProfileResult[] = [];
+
+  for (const profile of profiles) {
+    const runs: BenchProfileResult[] = [];
+    for (let i = 0; i < options.repeats; i += 1) {
+      runs.push(await runProfile(profile, options.seed + i));
+    }
+    const result = aggregateProfileRuns(profile, runs);
+    results.push(result);
+    printProfileResult(result);
+  }
+
+  const report: BenchReport = {
+    generatedAt: new Date().toISOString(),
+    results,
+    passCount: results.filter((x) => x.pass).length,
+    failCount: results.filter((x) => !x.pass).length,
+  };
+
+  const out = writeBenchReport(report, path.resolve(process.cwd(), options.outDir));
+  console.log(`report json: ${out.jsonPath}`);
+  console.log(`report md: ${out.markdownPath}`);
+
+  let baselineFailures = 0;
+  if (options.baselineReport) {
+    const baselinePath = path.resolve(process.cwd(), options.baselineReport);
+    const baselineRaw = fs.readFileSync(baselinePath, "utf8");
+    const baseline = JSON.parse(baselineRaw) as BenchReport;
+    const baselineByProfile = new Map(baseline.results.map((x) => [x.profile.name, x]));
+
+    for (const result of report.results) {
+      const previous = baselineByProfile.get(result.profile.name);
