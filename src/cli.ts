@@ -318,3 +318,43 @@ program
       authn: opts.jwtJwksUrl
         ? {
           required: opts.jwtRequired,
+          jwksUrl: opts.jwtJwksUrl,
+          issuer: opts.jwtIssuer || undefined,
+          audience: opts.jwtAudience || undefined,
+        }
+        : undefined,
+      authz: opts.openfgaEndpoint && opts.openfgaStoreId
+        ? {
+          endpoint: opts.openfgaEndpoint,
+          storeId: opts.openfgaStoreId,
+          modelId: opts.openfgaModelId || undefined,
+          relation: opts.openfgaRelation,
+          objectPrefix: opts.openfgaObjectPrefix,
+          userClaim: opts.openfgaUserClaim,
+          failOpen: opts.openfgaFailOpen,
+          token: opts.openfgaToken || undefined,
+          timeoutMs: Number(opts.openfgaTimeoutMs),
+        }
+        : undefined,
+      eventBus: opts.natsUrl
+        ? {
+          natsUrl: opts.natsUrl,
+          subjectPrefix: opts.eventSubjectPrefix,
+        }
+        : undefined,
+      traceDir: opts.stateDir,
+    });
+  });
+
+program
+  .command("canary")
+  .requiredOption("--target <url>", "target WebSocket URL")
+  .option("--host <host>", "proxy listen host", "127.0.0.1")
+  .option("--port <number>", "proxy listen port", "4100")
+  .option("--listener-engine <engine>", "listener engine: ws or uwebsockets", "ws")
+  .option("--ingress-h2h3-pilot", "enable forwarded h2/h3 ingress pilot checks", false)
+  .option("--batch-window-ms <number>", "batching window in ms", "10")
+  .option("--batch-max-messages <number>", "max logical messages per flush before immediate send", "64")
+  .option("--batch-max-bytes <number>", "max logical payload bytes per flush before immediate send", "131072")
+  .option("--min-batch-window-ms <number>", "adaptive minimum batch window", "0")
+  .option("--max-batch-window-ms <number>", "adaptive maximum batch window", "20")
