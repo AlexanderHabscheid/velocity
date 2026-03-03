@@ -88,3 +88,43 @@ velocity bootstrap
 
 This writes:
 - `velocity.config.json`
+- `.env.velocity.example`
+
+Use `--out-dir` to target another directory and `--force` to overwrite.
+
+Control-plane defaults to JSON-file persistence (stable, no experimental runtime warnings):
+
+```bash
+velocity control-plane --store-engine json --state-file .velocity/control-plane-state.json
+```
+
+SQLite is still available when explicitly selected:
+
+```bash
+velocity control-plane --store-engine sqlite --db-path .velocity/control-plane.db
+```
+
+Distributed mode (shared rate-limit buckets + event propagation):
+
+```bash
+velocity control-plane --store-engine json --state-file .velocity/control-plane-state.json --valkey-url redis://127.0.0.1:6379 --nats-url nats://127.0.0.1:4222
+velocity proxy --target ws://localhost:4000 --rate-limit-control-plane-endpoint http://127.0.0.1:4200 --nats-url nats://127.0.0.1:4222
+```
+
+Hot runtime tuning (no proxy restart):
+
+```bash
+curl -X PUT http://127.0.0.1:4200/v1/runtime/profile \
+  -H "content-type: application/json" \
+  -d '{"batchWindowMs":2,"minBatchWindowMs":0,"maxBatchWindowMs":8,"latencyBudgetMs":20,"enableDelta":true}'
+
+velocity proxy --target ws://localhost:4000 --runtime-control-plane-endpoint http://127.0.0.1:4200
+```
+
+## Proxy options
+
+```bash
+velocity proxy \
+  --target ws://localhost:4000 \
+  --listener-engine ws \
+  --performance-profile balanced \
