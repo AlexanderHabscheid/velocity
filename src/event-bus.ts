@@ -38,3 +38,5 @@ export class NatsEventBus implements VelocityEventBus {
 
   async close(): Promise<void> {
     await this.nc.drain();
+  }
+}

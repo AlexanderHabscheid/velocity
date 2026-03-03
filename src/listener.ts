@@ -38,3 +38,19 @@ class UwsSocketAdapter extends EventEmitter implements ProxySocket {
 
   send(data: unknown, options?: { binary?: boolean }): void {
     if (this.state !== SOCKET_STATE.OPEN) {
+      return;
+    }
+    const binary = options?.binary ?? true;
+    const ok = this.socket.send(data, binary);
+    if (!ok) {
+      this.emit("error", new Error("uWebSockets.js send failed"));
+    }
+  }
+
+  close(code?: number, reason?: string): void {
+    if (this.state !== SOCKET_STATE.OPEN) {
+      return;
+    }
+    this.state = SOCKET_STATE.CLOSING;
+    try {
+      this.socket.end(code, reason);

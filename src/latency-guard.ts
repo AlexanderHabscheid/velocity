@@ -38,3 +38,25 @@ export class LatencyGuard {
     if (this.samples.length > 256) {
       this.samples.splice(0, this.samples.length - 256);
     }
+
+    const p95 = percentile(this.samples, 0.95);
+    if (this.samples.length >= this.minSamples && p95 > this.budgetMs * this.breachFactor) {
+      this.guardedUntil = Date.now() + this.cooldownMs;
+    }
+
+    if (
+      this.samples.length >= this.minSamples &&
+      p95 <= this.budgetMs * this.recoveryFactor &&
+      Date.now() >= this.guardedUntil
+    ) {
+      this.guardedUntil = 0;
+    }
+
+    const next = this.isGuarded();
+    return { changed: prev !== next, guarded: next, p95 };
+  }
+
+  isGuarded(): boolean {
+    return Date.now() < this.guardedUntil;
+  }
+}
