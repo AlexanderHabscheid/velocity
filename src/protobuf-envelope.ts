@@ -78,3 +78,43 @@ function decodeLen(data: Uint8Array, offset: number): { value: Uint8Array; next:
   const len = decodeVarint(data, offset);
   if (!len) {
     return null;
+  }
+  const end = len.next + len.value;
+  if (end > data.length) {
+    return null;
+  }
+  return { value: data.subarray(len.next, end), next: end };
+}
+
+function encodeCapabilities(cap: NonNullable<VelocityEnvelope["control"]>["capabilities"]): Buffer {
+  const parts: Buffer[] = [];
+  parts.push(writeVarintField(1, cap.protocolVersion));
+  parts.push(writeBoolField(2, cap.msgpack));
+  parts.push(writeBoolField(3, cap.zstd));
+  parts.push(writeBoolField(4, cap.delta));
+  parts.push(writeBoolField(5, cap.batching));
+  parts.push(writeBoolField(6, cap.adaptiveBatching));
+  parts.push(writeVarintField(7, cap.latencyBudgetMs));
+  parts.push(writeVarintField(8, cap.batchWindowMs));
+  if (typeof cap.zstdDictionary === "boolean") {
+    parts.push(writeBoolField(9, cap.zstdDictionary));
+  }
+  if (typeof cap.protobuf === "boolean") {
+    parts.push(writeBoolField(10, cap.protobuf));
+  }
+  return Buffer.concat(parts);
+}
+
+function decodeCapabilities(data: Uint8Array): NonNullable<VelocityEnvelope["control"]>["capabilities"] | null {
+  const out: NonNullable<VelocityEnvelope["control"]>["capabilities"] = {
+    protocolVersion: 0,
+    msgpack: true,
+    zstd: false,
+    delta: false,
+    batching: true,
+    adaptiveBatching: true,
+    latencyBudgetMs: 0,
+    batchWindowMs: 0,
+    zstdDictionary: false,
+    protobuf: false,
+  };
