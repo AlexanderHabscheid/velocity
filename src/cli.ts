@@ -638,3 +638,42 @@ program
   .option("--store-engine <engine>", "control-plane persistence engine: json or sqlite", "json")
   .option("--state-file <path>", "json state file path for control-plane persistence", path.resolve(process.cwd(), ".velocity/control-plane-state.json"))
   .option("--db-path <path>", "sqlite path for durable tenant policy + rate-limit state", path.resolve(process.cwd(), ".velocity/control-plane.db"))
+  .option("--valkey-url <url>", "optional Valkey/Redis URL for distributed rate-limit buckets", "")
+  .option("--nats-url <url>", "optional NATS URL for control-plane event publishing", "")
+  .option("--event-subject-prefix <prefix>", "NATS subject prefix for control-plane events", "velocity.events")
+  .action(async (opts: {
+    host: string;
+    port: string;
+    storeEngine: "json" | "sqlite";
+    stateFile: string;
+    dbPath: string;
+    valkeyUrl: string;
+    natsUrl: string;
+    eventSubjectPrefix: string;
+  }) => {
+    await startControlPlaneWithOptions({
+      host: opts.host,
+      port: Number(opts.port),
+      storeEngine: opts.storeEngine,
+      stateFile: opts.stateFile,
+      dbPath: opts.dbPath,
+      valkeyUrl: opts.valkeyUrl || undefined,
+      natsUrl: opts.natsUrl || undefined,
+      eventSubjectPrefix: opts.eventSubjectPrefix,
+    });
+  });
+
+program
+  .command("doctor")
+  .option("--infra", "also check docker and kubectl infrastructure prerequisites", false)
+  .action((opts: { infra: boolean }) => {
+    const result = runDoctor({ infra: opts.infra });
+    if (!result.ok) {
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command("bootstrap")
+  .option("--out-dir <path>", "directory where velocity template files are written", ".")
+  .option("--force", "overwrite existing velocity bootstrap files", false)
