@@ -68,3 +68,5 @@ static_resources:
         endpoints:
           - lb_endpoints:
               - endpoint:
+                  address:
+                    socket_address:

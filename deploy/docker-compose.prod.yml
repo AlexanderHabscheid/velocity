@@ -78,3 +78,41 @@ services:
       - ${VELOCITY_TARGET_WS:-ws://host.docker.internal:4000}
       - --host
       - 0.0.0.0
+      - --port
+      - "4100"
+      - --zstd
+      - --zstd-min-bytes
+      - "512"
+      - --zstd-min-gain-ratio
+      - "0.03"
+      - --metrics-host
+      - 0.0.0.0
+      - --metrics-port
+      - "9464"
+      - --listener-engine
+      - ${VELOCITY_LISTENER_ENGINE:-ws}
+      - --opa-endpoint
+      - http://opa:8181
+      - --opa-path
+      - velocity/allow
+      - --rate-limit-control-plane-endpoint
+      - http://velocity-control-plane:4200
+      - --nats-url
+      - nats://nats:4222
+      - --otlp-http-endpoint
+      - http://otel-collector:4318
+    ports:
+      - "4100:4100"
+      - "9464:9464"
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.105.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./deploy/otel/collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4318:4318"
+      - "9465:9465"
+
+volumes:
+  velocity_state:
