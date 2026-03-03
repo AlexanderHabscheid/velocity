@@ -114,3 +114,32 @@ export async function runBenchCi(options: BenchCiOptions): Promise<void> {
 
     for (const result of report.results) {
       const previous = baselineByProfile.get(result.profile.name);
+      if (!previous) {
+        continue;
+      }
+      const maxAllowedP95ByPct = previous.p95DeltaMs * (1 + options.maxP95RegressionPct / 100);
+      const maxAllowedP95ByFloor = previous.p95DeltaMs + options.maxP95RegressionMsFloor;
+      const maxAllowedP95 = Math.max(maxAllowedP95ByPct, maxAllowedP95ByFloor);
+      if (result.p95DeltaMs > maxAllowedP95) {
+        baselineFailures += 1;
+        console.error(
+          `certification failure (${result.profile.name}): p95 delta ${result.p95DeltaMs.toFixed(2)}ms > baseline guard ${maxAllowedP95.toFixed(2)}ms`,
+        );
+      }
+      const minAllowedByteReduction = previous.byteReductionPct - options.maxByteReductionDropPct;
+      if (result.byteReductionPct < minAllowedByteReduction) {
+        baselineFailures += 1;
+        console.error(
+          `certification failure (${result.profile.name}): byte reduction ${result.byteReductionPct.toFixed(2)}% < baseline guard ${minAllowedByteReduction.toFixed(2)}%`,
+        );
+      }
+    }
+    console.log(`baseline certification checks: ${baselineFailures === 0 ? "PASS" : `FAIL (${baselineFailures})`}`);
+  }
+
+  if (options.failOnRegression && (report.failCount > 0 || baselineFailures > 0)) {
+    throw new Error(
+      `bench-ci failed: thresholds=${report.failCount} baseline=${baselineFailures}`,
+    );
+  }
+}

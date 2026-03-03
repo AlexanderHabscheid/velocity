@@ -147,3 +147,14 @@ program
   .option("--openfga-store-id <id>", "OpenFGA store ID", "")
   .option("--openfga-model-id <id>", "OpenFGA authorization model ID", "")
   .option("--openfga-relation <relation>", "OpenFGA relation to check", "connect")
+  .option("--openfga-object-prefix <prefix>", "OpenFGA object prefix", "tenant:")
+  .option("--openfga-user-claim <claim>", "JWT claim name to map to OpenFGA user", "sub")
+  .option("--openfga-fail-open", "allow traffic when OpenFGA check errors", false)
+  .option("--openfga-token <token>", "optional OpenFGA API bearer token", "")
+  .option("--openfga-timeout-ms <number>", "OpenFGA check timeout in milliseconds", "250")
+  .option("--nats-url <url>", "optional NATS URL for runtime event publishing", "")
+  .option("--event-subject-prefix <prefix>", "NATS subject prefix for runtime events", "velocity.events")
+  .action(async (opts: {
+    target: string;
+    host: string;
+    port: string;
