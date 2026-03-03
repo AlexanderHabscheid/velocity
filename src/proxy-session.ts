@@ -777,3 +777,42 @@ export function createProxySession(params: SessionParams): void {
     heartbeatTimer = setInterval(() => {
       if (tornDown) {
         return;
+      }
+      const now = Date.now();
+      if (
+        now - lastAgentPongAt > heartbeatIntervalMs + heartbeatTimeoutMs ||
+        now - lastTargetPongAt > heartbeatIntervalMs + heartbeatTimeoutMs
+      ) {
+        emit({
+          ts: new Date().toISOString(),
+          sessionId,
+          direction: "agent->server",
+          bytesRaw: 0,
+          bytesSent: 0,
+          batchedCount: 0,
+          compressed: false,
+          delta: false,
+          queueDelayMs: 0,
+          note: "heartbeat-timeout",
+        });
+        teardown();
+        return;
+      }
+      if (agentSocket.readyState === SOCKET_STATE.OPEN) {
+        agentSocket.ping?.();
+      }
+      if (targetSocket.readyState === SOCKET_STATE.OPEN) {
+        targetSocket.ping?.();
+      }
+    }, heartbeatIntervalMs);
+    heartbeatTimer.unref();
+  };
+  agentSocket.on("pong", () => {
+    lastAgentPongAt = Date.now();
+  });
+  targetSocket.on("pong", () => {
+    lastTargetPongAt = Date.now();
+  });
+  startHeartbeat();
+  agentSocket.on("close", teardown);
+  agentSocket.on("error", teardown);
