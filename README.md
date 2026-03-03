@@ -128,3 +128,43 @@ velocity proxy \
   --target ws://localhost:4000 \
   --listener-engine ws \
   --performance-profile balanced \
+  --listener-max-payload-bytes 104857600 \
+  --upstream-handshake-timeout-ms 10000 \
+  --upstream-max-payload-bytes 104857600 \
+  --no-upstream-per-message-deflate \
+  --heartbeat-interval-ms 25000 \
+  --heartbeat-timeout-ms 10000 \
+  --target-pool ws://10.0.0.11:4000,ws://10.0.0.12:4000 \
+  --target-pool-ewma-alpha 0.2 \
+  --host 127.0.0.1 \
+  --port 4100 \
+  --batch-window-ms 10 \
+  --min-batch-window-ms 0 \
+  --max-batch-window-ms 20 \
+  --latency-budget-ms 40 \
+  --zstd \
+  --zstd-min-bytes 512 \
+  --zstd-min-gain-ratio 0.03 \
+  --delta \
+  --metrics-port 9464 \
+  --rate-limit-control-plane-endpoint http://127.0.0.1:4200
+```
+
+## Observability
+
+Default CLI flow (no web UI):
+
+```bash
+velocity stats
+velocity stats --json
+velocity stats --verbose
+velocity stats --watch
+```
+
+`velocity stats` includes a tenant breakdown section by default (top tenants by frame volume).
+It also reports agent loop KPIs (`loop turn avg`, `frames per turn avg`, `queue delay p95`) for end-to-end loop tuning.
+
+Optional service-mode telemetry endpoint:
+
+```bash
+velocity proxy --target ws://localhost:4000 --metrics-port 9464
