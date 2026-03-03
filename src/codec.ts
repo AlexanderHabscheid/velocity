@@ -66,3 +66,43 @@ function isValidEnvelope(value: unknown): value is VelocityEnvelope {
       typeof value.deltaPatch.changed === "string";
   }
 
+  if (value.kind === "control") {
+    if (!isRecord(value.control)) {
+      return false;
+    }
+    if (value.control.type !== "hello" && value.control.type !== "hello-ack") {
+      return false;
+    }
+    if (typeof value.control.ackFor !== "undefined" && typeof value.control.ackFor !== "string") {
+      return false;
+    }
+    return isValidCapabilities(value.control.capabilities);
+  }
+
+  return false;
+}
+
+export class VelocityCodec {
+  private readonly wantZstd: boolean;
+  private readonly zstdMinBytes: number;
+  private readonly zstdMinGainRatio: number;
+  private zstd: ZstdFns | null = null;
+
+  constructor(options: boolean | VelocityCodecOptions) {
+    const normalized = typeof options === "boolean"
+      ? { enableZstd: options, zstdMinBytes: 512, zstdMinGainRatio: 0.03 }
+      : {
+        enableZstd: options.enableZstd,
+        zstdMinBytes: options.zstdMinBytes ?? 512,
+        zstdMinGainRatio: options.zstdMinGainRatio ?? 0.03,
+      };
+    this.wantZstd = normalized.enableZstd;
+    this.zstdMinBytes = Math.max(0, normalized.zstdMinBytes);
+    this.zstdMinGainRatio = Math.max(0, Math.min(1, normalized.zstdMinGainRatio));
+  }
+
+  async init(): Promise<void> {
+    if (!this.wantZstd) {
+      return;
+    }
+
