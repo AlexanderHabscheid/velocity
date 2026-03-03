@@ -1,0 +1,10 @@
+{
+  "tenants": {
+    "default": {
+      "enabled": true,
+      "rateLimitRps": 120,
+      "apiKeys": ["velocity-dev-key"]
+    },
+    "acme": {
+      "enabled": true,
+      "rateLimitRps": 80,
