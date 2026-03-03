@@ -65,3 +65,9 @@ export class AdaptiveBatchController {
   }
 
   snapshot(): { windowMs: number; bypassing: boolean } {
+    return {
+      windowMs: this.currentWindowMs(),
+      bypassing: this.shouldBypassBatching(),
+    };
+  }
+}

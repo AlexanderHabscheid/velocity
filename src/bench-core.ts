@@ -76,3 +76,36 @@ export const DEFAULT_CI_PROFILES: BenchProfile[] = [
     burst: 20,
     payloadBytes: 1024,
     batchWindowMs: 3,
+    minBatchWindowMs: 0,
+    maxBatchWindowMs: 8,
+    latencyBudgetMs: 40,
+    serverDelayMs: 20,
+    jitterMs: 4,
+    maxP95DeltaMs: 8,
+    maxAvgDeltaMs: 6,
+    minFrameReductionPct: -1,
+    minByteReductionPct: 95,
+  },
+  {
+    name: "mobile-edge",
+    messages: 350,
+    burst: 24,
+    payloadBytes: 1536,
+    batchWindowMs: 5,
+    minBatchWindowMs: 1,
+    maxBatchWindowMs: 12,
+    latencyBudgetMs: 120,
+    serverDelayMs: 80,
+    jitterMs: 12,
+    maxP95DeltaMs: 12,
+    maxAvgDeltaMs: 10,
+    minFrameReductionPct: -1,
+    minByteReductionPct: 97,
+  },
+];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function percentile(values: number[], p: number): number {

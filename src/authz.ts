@@ -69,3 +69,4 @@ export async function evaluateOpenFgaAccess(params: EvaluateAuthzParams): Promis
   } finally {
     clearTimeout(timeout);
   }
+}
