@@ -111,3 +111,43 @@ export class MetricsStore {
   }
 
   private getTenantMetrics(tenantId: string): TenantAggregateMetrics {
+    const current = this.metrics.perTenant[tenantId];
+    if (current) {
+      const merged = { ...EMPTY_TENANT_METRICS, ...current };
+      this.metrics.perTenant[tenantId] = merged;
+      return merged;
+    }
+    const next = { ...EMPTY_TENANT_METRICS };
+    this.metrics.perTenant[tenantId] = next;
+    return next;
+  }
+
+  record(event: FrameRecord): void {
+    const tenant = event.tenantId?.trim() || "default";
+    const perTenant = this.getTenantMetrics(tenant);
+    if (!event.metricsOnly) {
+      this.metrics.totalFramesRaw += event.batchedCount;
+      perTenant.totalFramesRaw += event.batchedCount;
+      this.metrics.totalFramesSent += 1;
+      perTenant.totalFramesSent += 1;
+      this.metrics.totalBytesRaw += event.bytesRaw;
+      perTenant.totalBytesRaw += event.bytesRaw;
+      this.metrics.totalBytesSent += event.bytesSent;
+      perTenant.totalBytesSent += event.bytesSent;
+      if (event.batchedCount > 1) {
+        this.metrics.totalBatches += 1;
+        this.metrics.totalBatchMembers += event.batchedCount;
+      }
+      if (event.compressed) {
+        this.metrics.totalCompressedFrames += 1;
+      }
+      if (event.delta) {
+        this.metrics.totalDeltaFrames += 1;
+      }
+    }
+    if (typeof event.latencyMs === "number") {
+      this.metrics.latencySamples += 1;
+      perTenant.latencySamples += 1;
+      this.metrics.latencyMsTotal += event.latencyMs;
+      perTenant.latencyMsTotal += event.latencyMs;
+      this.metrics.latencyMsP95Window.push(event.latencyMs);
