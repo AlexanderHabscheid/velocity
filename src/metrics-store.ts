@@ -231,3 +231,43 @@ export class MetricsStore {
 
   private recordLatencyHistogram(latencyMs: number): void {
     const bounds = [1, 2, 5, 10, 20, 50, 100, 250, 500, 1000];
+    let bucketLabel = "+Inf";
+    for (const bound of bounds) {
+      if (latencyMs <= bound) {
+        bucketLabel = `${bound}`;
+        break;
+      }
+    }
+    this.metrics.latencyHistogram[bucketLabel] = (this.metrics.latencyHistogram[bucketLabel] ?? 0) + 1;
+  }
+
+  appendTrace(sessionId: string, event: FrameRecord): void {
+    const lines = this.traceBuffers.get(sessionId) ?? [];
+    lines.push(`${JSON.stringify(event)}\n`);
+    this.traceBuffers.set(sessionId, lines);
+  }
+
+  flush(): void {
+    this.flushQueued = true;
+    if (!this.flushing) {
+      void this.flushLoop();
+    }
+  }
+
+  async close(): Promise<void> {
+    if (!this.closePromise) {
+      this.flush();
+      this.closePromise = this.waitForIdle();
+    }
+    return this.closePromise;
+  }
+
+  private async waitForIdle(): Promise<void> {
+    while (this.flushing || this.flushQueued) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  }
+
+  private snapshotTraceBuffers(): Array<{ sessionId: string; data: string }> {
+    const items: Array<{ sessionId: string; data: string }> = [];
+    for (const [sessionId, lines] of this.traceBuffers) {
