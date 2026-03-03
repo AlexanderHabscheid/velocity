@@ -140,3 +140,43 @@ function parseJsonMessage(data: WebSocket.RawData): { id: number } | null {
       ? Buffer.concat(data.map((c) => (Buffer.isBuffer(c) ? c : Buffer.from(c)))).toString("utf8")
       : Buffer.from(data).toString("utf8");
 
+  try {
+    const parsed = JSON.parse(text) as { id?: number; result?: { id?: number } };
+    if (typeof parsed.id === "number") {
+      return { id: parsed.id };
+    }
+    if (parsed.result && typeof parsed.result.id === "number") {
+      return { id: parsed.result.id };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function getOpenPort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      if (!address || typeof address === "string") {
+        reject(new Error("failed to allocate a local port"));
+        return;
+      }
+      server.close((err) => (err ? reject(err) : resolve(address.port)));
+    });
+  });
+}
+
+async function runTrial(url: string, profile: BenchProfile): Promise<TrialResult> {
+  const latencies: number[] = [];
+  const sentAt = new Map<number, number>();
+  const payload = createPayload(profile.payloadBytes);
+  let logicalBytesSent = 0;
+  let logicalBytesReceived = 0;
+
+  const ws = new WebSocket(url);
+  await new Promise<void>((resolve, reject) => {
+    ws.once("open", () => resolve());
+    ws.once("error", (err) => reject(err));
+  });
