@@ -13,3 +13,7 @@ To refresh the baseline after an approved performance change:
 3. Replace `ci/bench/baseline-report.json` with the generated `ci/bench/velocity-bench-*.json` file from step 2
 4. Re-run `npm run bench:certify`
 
+Only update baseline in the same change where you document why the performance profile changed.
+
+Current calibration note:
+- CI now enforces latency plus byte-reduction floors. Frame reduction remains tracked for visibility but is not a strict gate.
