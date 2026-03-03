@@ -180,3 +180,23 @@ async function runTrial(url: string, profile: BenchProfile): Promise<TrialResult
     ws.once("open", () => resolve());
     ws.once("error", (err) => reject(err));
   });
+
+  const started = Date.now();
+  let parsedCount = 0;
+  const done = new Promise<void>((resolve, reject) => {
+    ws.on("message", (data) => {
+      logicalBytesReceived += Buffer.isBuffer(data) ? data.length : Buffer.byteLength(String(data), "utf8");
+      const parsedMessage = parseJsonMessage(data);
+      if (!parsedMessage) {
+        return;
+      }
+      const start = sentAt.get(parsedMessage.id);
+      if (typeof start !== "number") {
+        return;
+      }
+      parsedCount += 1;
+      latencies.push(Date.now() - start);
+      sentAt.delete(parsedMessage.id);
+      if (parsedCount >= profile.messages) {
+        resolve();
+      }

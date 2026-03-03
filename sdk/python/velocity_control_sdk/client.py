@@ -156,3 +156,23 @@ class VelocityControlClient:
             batch_max_messages=raw["batchMaxMessages"],
             batch_max_bytes=raw["batchMaxBytes"],
             enable_zstd=raw["enableZstd"],
+            enable_delta=raw["enableDelta"],
+            safe_mode=raw["safeMode"],
+            enable_passthrough_merge=raw["enablePassthroughMerge"],
+            updated_at=raw["updatedAt"],
+        )
+
+    def _request(self, path: str, method: str, body: Optional[dict] = None) -> dict:
+        data = None
+        headers = {}
+        if body is not None:
+            data = json.dumps(body).encode("utf-8")
+            headers["content-type"] = "application/json"
+        req = urllib.request.Request(
+            f"{self.base_url}{path}",
+            method=method,
+            data=data,
+            headers=headers,
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return json.loads(resp.read().decode("utf-8"))
