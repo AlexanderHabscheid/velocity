@@ -17,3 +17,34 @@ spec:
         runAsNonRoot: true
         runAsUser: 10001
         runAsGroup: 10001
+      containers:
+        - name: valkey
+          image: valkey/valkey:8.1-alpine
+          args: ["valkey-server", "--save", "", "--appendonly", "no"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: velocity-valkey
+  namespace: velocity
+spec:
+  selector:
+    app: velocity-valkey
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379

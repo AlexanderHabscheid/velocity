@@ -38,3 +38,12 @@ spec:
             - "4100"
             - --listener-engine
             - ws
+            - --zstd
+            - --zstd-min-bytes
+            - "512"
+            - --zstd-min-gain-ratio
+            - "0.03"
+            - --metrics-host
+            - 0.0.0.0
+            - --metrics-port
+            - "9464"
