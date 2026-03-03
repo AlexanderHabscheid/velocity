@@ -1221,3 +1221,42 @@
           3,
           3,
           3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        "logicalBytesSent": 349690,
+        "logicalBytesReceived": 371343,
+        "elapsedMs": 65
+      },
+      "frameReductionPct": -0.16638935108153077,
+      "byteReductionPct": 97.77200488124123,
+      "p95DeltaMs": 2,
+      "avgDeltaMs": 0.23833333333333329,
+      "p95DeltaPct": 50,
+      "avgDeltaPct": 8.431603773584904,
+      "pass": true,
+      "stateDir": "/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-low-latency-lan-893b3409-65af-45a0-8129-88a220c9339a-GchdME,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-low-latency-lan-745ee816-7dcb-43b3-92b2-f7ecde52d680-mmhzDi,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-low-latency-lan-e90cbe21-719a-4773-b253-5e1b81ac4b43-i1ftxz"
+    },
+    {
+      "profile": {
+        "name": "regional",
+        "messages": 500,
+        "burst": 20,
+        "payloadBytes": 1024,
+        "batchWindowMs": 3,
+        "minBatchWindowMs": 0,
+        "maxBatchWindowMs": 8,
+        "latencyBudgetMs": 40,
+        "serverDelayMs": 20,
+        "jitterMs": 4,
+        "maxP95DeltaMs": 8,
+        "maxAvgDeltaMs": 6,
+        "minFrameReductionPct": -1,
+        "minByteReductionPct": 95
+      },
+      "direct": {
+        "latencies": [
