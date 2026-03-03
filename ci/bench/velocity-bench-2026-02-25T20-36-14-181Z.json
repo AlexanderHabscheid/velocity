@@ -1220,3 +1220,42 @@
           4,
           5,
           5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ],
+        "logicalBytesSent": 349690,
+        "logicalBytesReceived": 371401,
+        "elapsedMs": 75
+      },
+      "frameReductionPct": 10.98169717138103,
+      "byteReductionPct": -0.022005595708623052,
+      "p95DeltaMs": 9,
+      "avgDeltaMs": 5.356666666666667,
+      "p95DeltaPct": 225,
+      "avgDeltaPct": 177.73851590106005,
+      "pass": false,
+      "stateDir": "/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-low-latency-lan-e283ba89-9938-4866-aafc-fdeb1214e0f7-XSu2OM,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-low-latency-lan-a75bc76b-69d7-4073-a8b4-f72c4e135d7a-w3OZwo,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-low-latency-lan-3eaa1de8-9aa8-44ae-a5a0-36e26b7bae84-eYwJP3,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-low-latency-lan-ca864efa-5565-4cec-a911-5d5f4b146ced-DTPTVR,/var/folders/2c/zp3g99wj76z300yt_5yd84100000gp/T/velocity-bench-low-latency-lan-d657a543-4d25-4d63-ad3e-1ff4e765dc20-qDfekM"
+    },
+    {
+      "profile": {
+        "name": "regional",
+        "messages": 500,
+        "burst": 20,
+        "payloadBytes": 1024,
+        "batchWindowMs": 3,
+        "minBatchWindowMs": 0,
+        "maxBatchWindowMs": 8,
+        "latencyBudgetMs": 40,
+        "serverDelayMs": 20,
+        "jitterMs": 4,
+        "maxP95DeltaMs": 8,
+        "maxAvgDeltaMs": 6,
+        "minFrameReductionPct": 15
+      },
+      "direct": {
+        "latencies": [
+          20,
