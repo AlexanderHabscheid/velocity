@@ -543,3 +543,42 @@ export function createProxySession(params: SessionParams): void {
         bytesSent: encoded.buffer.length,
         batchedCount: 1,
         compressed: encoded.compressed,
+        delta: false,
+        queueDelayMs: 0,
+        note: "hello-sent",
+      });
+      negotiationTimer = setTimeout(async () => {
+        setMode("passthrough", "hello-timeout->passthrough");
+        await flushBatch();
+      }, options.negotiationTimeoutMs);
+    } else {
+      setMode("velocity", "negotiation-disabled");
+    }
+    await flushBatch();
+  });
+  targetSocket.on("message", async (data, isBinary = true) => {
+    if (isSocketBackpressured(agentSocket)) {
+      emit({
+        ts: new Date().toISOString(),
+        sessionId,
+        direction: "server->agent",
+        bytesRaw: 0,
+        bytesSent: 0,
+        batchedCount: 0,
+        compressed: false,
+        delta: false,
+        queueDelayMs: 0,
+        note: `agent-backpressure(buffered=${agentSocket.bufferedAmount})`,
+        signal: "backpressure",
+      });
+      teardown();
+      return;
+    }
+    const now = Date.now();
+    const outgoing = toBuffer(data as WebSocket.RawData);
+    const batch = shiftOutstanding();
+    const latencyMs = batch ? now - batch.sentAt : undefined;
+    if (batch && typeof latencyMs === "number") {
+      upstreamObserver?.onLatency?.(latencyMs);
+      emit({
+        ts: new Date().toISOString(),
