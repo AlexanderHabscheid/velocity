@@ -75,3 +75,43 @@ class UwsSocketAdapter extends EventEmitter implements ProxySocket {
       return;
     }
     this.state = SOCKET_STATE.CLOSED;
+    this.emit("close");
+  }
+
+  get readyState(): number {
+    return this.state;
+  }
+
+  get bufferedAmount(): number {
+    try {
+      return this.socket.getBufferedAmount();
+    } catch {
+      return 0;
+    }
+  }
+}
+
+async function startWsListener(options: ListenerOptions): Promise<ListenerHandle> {
+  const wss = new WebSocketServer({
+    host: options.host,
+    port: options.port,
+    maxPayload: Math.max(1024, options.maxPayloadBytes ?? 100 * 1024 * 1024),
+  });
+  wss.on("connection", (socket, req) => {
+    void Promise.resolve(options.onConnection(socket as unknown as ProxySocket, {
+      url: req.url,
+      headers: req.headers,
+      remoteAddress: req.socket.remoteAddress,
+    })).catch((err) => {
+      options.logger.warn("listener connection handler failed", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      socket.close(1011, "listener_error");
+    });
+  });
+
+  return {
+    close: async () =>
+      new Promise<void>((resolve, reject) => {
+        for (const client of wss.clients) {
+          client.close();
