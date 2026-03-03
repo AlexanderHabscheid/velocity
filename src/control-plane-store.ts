@@ -256,3 +256,43 @@ export class SqliteControlPlaneStore implements ControlPlaneStore {
 
     this.db.prepare(`
       INSERT INTO rate_limit_buckets (tenant_id, tokens, last_ms)
+      VALUES (?, ?, ?)
+      ON CONFLICT(tenant_id) DO UPDATE SET
+        tokens=excluded.tokens,
+        last_ms=excluded.last_ms
+    `).run(tenantId, decision.nextTokens, nowMs);
+
+    return {
+      allow: decision.allow,
+      remainingTokens: Number(decision.nextTokens.toFixed(3)),
+      updatedAt: new Date(nowMs).toISOString(),
+    };
+  }
+
+  async close(): Promise<void> {
+    if (typeof this.db.close === "function") {
+      this.db.close();
+    }
+  }
+}
+
+export class ValkeyRateLimitStore implements ControlPlaneStore {
+  private constructor(
+    private readonly base: ControlPlaneStore,
+    private readonly client: any,
+    private readonly keyPrefix: string,
+  ) {}
+
+  static async create(base: ControlPlaneStore, url: string, keyPrefix = "velocity:ratelimit:"): Promise<ValkeyRateLimitStore> {
+    let redisModule: any;
+    try {
+      redisModule = await import("redis");
+    } catch {
+      throw new Error("Valkey store configured but 'redis' package is not installed. Install it with: npm install redis");
+    }
+    const client = redisModule.createClient({ url });
+    await client.connect();
+    return new ValkeyRateLimitStore(base, client, keyPrefix);
+  }
+
+  async getTenantPolicy(tenantId: string): Promise<TenantPolicy> {
