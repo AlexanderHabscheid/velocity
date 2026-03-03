@@ -38,3 +38,42 @@ export function handlePassthroughDownstream(
           note: "passthrough-jsonrpc-split",
         });
       }
+      return true;
+    }
+  }
+
+  agentSocket.send(outgoing, { binary: isBinary });
+
+  emit({
+    ts: new Date().toISOString(),
+    sessionId,
+    direction: "server->agent",
+    bytesRaw: outgoing.length,
+    bytesSent: outgoing.length,
+    batchedCount: 1,
+    compressed: false,
+    delta: false,
+    queueDelayMs: 0,
+    latencyMs,
+    note: "passthrough-return",
+  });
+  return true;
+}
+
+interface VelocityFrameContext extends EmitContext {
+  codec: VelocityCodec;
+  parsedEnvelope: VelocityEnvelope;
+  parsedCompressed: boolean;
+  enableDelta: boolean;
+  lastServerText: string;
+  now: number;
+  adaptiveWindowMs: number;
+}
+
+export async function handleVelocityDownstreamFrames(ctx: VelocityFrameContext): Promise<string> {
+  const {
+    agentSocket,
+    codec,
+    emit,
+    sessionId,
+    latencyMs,

@@ -38,3 +38,4 @@ export function isControlHello(envelope: VelocityEnvelope): boolean {
 
 export function isControlHelloAck(envelope: VelocityEnvelope): boolean {
   return envelope.kind === "control" && envelope.control?.type === "hello-ack";
+}
