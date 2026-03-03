@@ -158,3 +158,43 @@ export interface AggregateMetrics {
   totalFramesRaw: number;
   totalFramesSent: number;
   totalBytesRaw: number;
+  totalBytesSent: number;
+  totalBatches: number;
+  totalBatchMembers: number;
+  totalCompressedFrames: number;
+  totalDeltaFrames: number;
+  latencySamples: number;
+  latencyMsTotal: number;
+  latencyMsP95Window: number[];
+  loopTurnSamples: number;
+  loopTurnMsTotal: number;
+  toolRoundtripSamples: number;
+  toolRoundtripMsTotal: number;
+  framesPerTurnSamples: number;
+  framesPerTurnTotal: number;
+  queueDelaySamples: number;
+  queueDelayMsTotal: number;
+  queueDelayMsP95Window: number[];
+  latencyHistogram: Record<string, number>;
+  queueOverflowEvents: number;
+  backpressureEvents: number;
+  tenantBreakerOpenEvents: number;
+  sessionRollbackEvents: number;
+  policyDeniedEvents: number;
+  rateLimitDeniedEvents: number;
+  authRejectedEvents: number;
+  authzDeniedEvents: number;
+  perTenant: Record<string, TenantAggregateMetrics>;
+  updatedAt: string;
+}
+
+export interface VelocityEnvelope {
+  kind: "batch" | "single" | "delta" | "control";
+  id: string;
+  sentAt: number;
+  frames: Uint8Array[];
+  source?: string;
+  control?: {
+    type: "hello" | "hello-ack";
+    ackFor?: string;
+    capabilities: {
