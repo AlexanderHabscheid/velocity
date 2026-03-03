@@ -78,3 +78,43 @@ export class UpstreamPool {
     if (candidates.length === 0) {
       return null;
     }
+    let selected = candidates[0];
+    let selectedScore = this.score(selected);
+    for (let i = 1; i < candidates.length; i += 1) {
+      const current = candidates[i];
+      const score = this.score(current);
+      if (score < selectedScore) {
+        selected = current;
+        selectedScore = score;
+      }
+    }
+    selected.activeConnections += 1;
+    return selected.url;
+  }
+
+  releaseTarget(url: string): void {
+    const state = this.states.get(url);
+    if (!state) {
+      return;
+    }
+    state.activeConnections = Math.max(0, state.activeConnections - 1);
+  }
+
+  recordLatency(url: string, latencyMs: number): void {
+    const state = this.states.get(url);
+    if (!state || !Number.isFinite(latencyMs) || latencyMs < 0) {
+      return;
+    }
+    const next = state.ewmaLatencyMs === null
+      ? latencyMs
+      : (this.options.ewmaAlpha * latencyMs) + ((1 - this.options.ewmaAlpha) * state.ewmaLatencyMs);
+    state.ewmaLatencyMs = next;
+    state.healthy = true;
+    state.lastSuccessAtMs = Date.now();
+    state.consecutiveFailures = 0;
+  }
+
+  recordSuccess(url: string): void {
+    const state = this.states.get(url);
+    if (!state) {
+      return;
