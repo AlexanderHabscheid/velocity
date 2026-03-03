@@ -599,3 +599,42 @@ program
           timeoutMs: Number(opts.rateLimitTimeoutMs),
           failOpen: opts.rateLimitFailOpen,
         }
+        : undefined,
+      authn: opts.jwtJwksUrl
+        ? {
+          required: opts.jwtRequired,
+          jwksUrl: opts.jwtJwksUrl,
+          issuer: opts.jwtIssuer || undefined,
+          audience: opts.jwtAudience || undefined,
+        }
+        : undefined,
+      authz: opts.openfgaEndpoint && opts.openfgaStoreId
+        ? {
+          endpoint: opts.openfgaEndpoint,
+          storeId: opts.openfgaStoreId,
+          modelId: opts.openfgaModelId || undefined,
+          relation: opts.openfgaRelation,
+          objectPrefix: opts.openfgaObjectPrefix,
+          userClaim: opts.openfgaUserClaim,
+          failOpen: opts.openfgaFailOpen,
+          token: opts.openfgaToken || undefined,
+          timeoutMs: Number(opts.openfgaTimeoutMs),
+        }
+        : undefined,
+      eventBus: opts.natsUrl
+        ? {
+          natsUrl: opts.natsUrl,
+          subjectPrefix: opts.eventSubjectPrefix,
+        }
+        : undefined,
+      traceDir: opts.stateDir,
+    });
+  });
+
+program
+  .command("control-plane")
+  .option("--host <host>", "control-plane listen host", "127.0.0.1")
+  .option("--port <number>", "control-plane listen port", "4200")
+  .option("--store-engine <engine>", "control-plane persistence engine: json or sqlite", "json")
+  .option("--state-file <path>", "json state file path for control-plane persistence", path.resolve(process.cwd(), ".velocity/control-plane-state.json"))
+  .option("--db-path <path>", "sqlite path for durable tenant policy + rate-limit state", path.resolve(process.cwd(), ".velocity/control-plane.db"))
