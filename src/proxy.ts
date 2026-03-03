@@ -278,3 +278,43 @@ export async function startProxy(options: ProxyOptions): Promise<ProxyHandle> {
           }
           : undefined,
       });
+    },
+  });
+  const metricsExporter = typeof options.metricsPort === "number" && options.metricsPort > 0
+    ? await startMetricsExporter(store, options.metricsHost ?? "127.0.0.1", options.metricsPort)
+    : null;
+  const otlpExporter = options.otlpHttpEndpoint && options.otlpHttpEndpoint.trim()
+    ? startOtlpExporter(store, options.otlpHttpEndpoint, options.otlpIntervalMs, options.otlpServiceName, logger)
+    : null;
+  const flushInterval = setInterval(() => store.flush(), 500);
+  flushInterval.unref();
+
+  logger.info("velocity proxy listening", {
+    listen: `ws://${options.listenHost}:${options.listenPort}`,
+    target: options.target,
+    targetPoolSize: options.targetPool?.targets.length ?? 0,
+    batchWindowMs: options.batchWindowMs,
+    adaptiveRange: `${options.minBatchWindowMs}-${options.maxBatchWindowMs}`,
+    latencyBudgetMs: options.latencyBudgetMs,
+    negotiate: options.enableNegotiation,
+    merge: options.enablePassthroughMerge,
+    safeMode: options.safeMode,
+    canary: !!options.canary,
+    zstdMinBytes: options.zstdMinBytes,
+    zstdMinGainRatio: options.zstdMinGainRatio,
+    listenerEngine: options.listenerEngine ?? "ws",
+    listenerMaxPayloadBytes: options.listenerMaxPayloadBytes,
+    upstreamHandshakeTimeoutMs: options.upstreamHandshakeTimeoutMs,
+    upstreamMaxPayloadBytes: options.upstreamMaxPayloadBytes,
+    upstreamPerMessageDeflate: options.upstreamPerMessageDeflate,
+    heartbeatIntervalMs: options.heartbeatIntervalMs,
+    heartbeatTimeoutMs: options.heartbeatTimeoutMs,
+    runtimeControlPlaneEndpoint: options.runtimeControlPlaneEndpoint,
+    runtimeControlPlanePollMs: options.runtimeControlPlanePollMs,
+    policy: options.policy ? `${options.policy.opaEndpoint}/v1/data/${options.policy.opaPath}` : undefined,
+    distributedRateLimit: options.rateLimit?.controlPlaneEndpoint,
+    authn: options.authn ? `${options.authn.required ? "required" : "optional"} via jwks` : undefined,
+    authz: options.authz ? `${options.authz.endpoint}/stores/${options.authz.storeId}` : undefined,
+  });
+  if (metricsExporter) {
+    logger.info("velocity metrics exporter enabled", {
