@@ -315,3 +315,43 @@ export function createProxySession(params: SessionParams): void {
           }
           targetSocket.send(merged, { binary: false });
           pushOutstanding({ sentAt: now, queueDelayMs, count: entries.length });
+          emit({
+            ts: new Date().toISOString(),
+            sessionId,
+            direction: "agent->server",
+            bytesRaw: entries.reduce((sum, x) => sum + x.payload.length, 0),
+            bytesSent: merged.length,
+            batchedCount: entries.length,
+            compressed: false,
+            delta: false,
+            queueDelayMs,
+            note: mode === "unknown" ? "provisional-jsonrpc-batch" : "passthrough-jsonrpc-batch",
+          });
+          return;
+        }
+      }
+      for (let idx = 0; idx < entries.length; idx += 1) {
+        if (isSocketBackpressured(targetSocket)) {
+          requeueInbound(entries.slice(idx));
+          return;
+        }
+        const entry = entries[idx];
+        targetSocket.send(entry.payload, { binary: true });
+        pushOutstanding({ sentAt: now, queueDelayMs, count: 1 });
+        emit({
+          ts: new Date().toISOString(),
+          sessionId,
+          direction: "agent->server",
+          bytesRaw: entry.payload.length,
+          bytesSent: entry.payload.length,
+          batchedCount: 1,
+          compressed: false,
+          delta: false,
+          queueDelayMs,
+          note: mode === "unknown" ? "provisional-direct" : "passthrough-direct",
+        });
+      }
+      return;
+    }
+    if (
+      options.latencyBudgetMs <= 15 &&
