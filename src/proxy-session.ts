@@ -235,3 +235,43 @@ export function createProxySession(params: SessionParams): void {
     normalQueuedBytes = Math.max(0, normalQueuedBytes - bytes);
     return entries;
   };
+  const shouldFlushImmediately = (): boolean =>
+    priorityQueue.length > 0 ||
+    (normalQueue.length > 0 && normalQueue[0].streaming) ||
+    normalQueue.length >= Math.max(1, options.batchMaxMessages) ||
+    totalInboundQueuedBytes() >= Math.max(1, options.batchMaxBytes);
+  const shouldFavorLatency = (queueDelayMs: number, count: number): boolean => {
+    if (options.latencyBudgetMs > 15) {
+      return false;
+    }
+    if (count <= 3) {
+      return true;
+    }
+    return queueDelayMs > 0.75;
+  };
+
+  const setMode = (next: UpstreamMode, note: string): void => {
+    if (mode === next) {
+      return;
+    }
+    mode = next;
+    emit({
+      ts: new Date().toISOString(),
+      sessionId,
+      direction: "agent->server",
+      bytesRaw: 0,
+      bytesSent: 0,
+      batchedCount: 0,
+      compressed: false,
+      delta: false,
+      queueDelayMs: 0,
+      note,
+    });
+  };
+  const flushBatch = async (): Promise<void> => {
+    if (targetSocket.readyState !== SOCKET_STATE.OPEN || totalInboundQueued() === 0) {
+      return;
+    }
+    if (isSocketBackpressured(targetSocket)) {
+      emit({
+        ts: new Date().toISOString(),
