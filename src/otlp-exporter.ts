@@ -76,3 +76,43 @@ export function startOtlpExporter(
                 name: "velocity",
               },
               logRecords: [
+                {
+                  timeUnixNano: nowUnixNanoString(),
+                  severityText: "INFO",
+                  body: {
+                    stringValue: "velocity.metrics.snapshot",
+                  },
+                  attributes,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    try {
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) {
+        logger.warn("otlp export rejected", { status: resp.status, endpoint: url });
+      }
+    } catch (err) {
+      logger.warn("otlp export failed", {
+        endpoint: url,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  };
+
+  const interval = setInterval(tick, everyMs);
+  interval.unref();
+  tick();
+
+  return {
+    close: async () => {
