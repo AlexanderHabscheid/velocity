@@ -121,3 +121,43 @@ export function startControlPlaneWithOptions(options: ControlPlaneOptions): Prom
             }
             if (next.batchMaxMessages < 1 || next.batchMaxBytes < 1 || next.latencyBudgetMs < 1) {
               writeJson(res, 400, { error: "invalid_runtime_profile" });
+              return;
+            }
+            Object.assign(runtimeProfile, next);
+            void publishEvent("control_plane.runtime_profile_updated", runtimeProfile as unknown as Record<string, unknown>);
+            writeJson(res, 200, runtimeProfile);
+          } catch {
+            writeJson(res, 400, { error: "invalid_json" });
+          }
+          return;
+        }
+        const policyMatch = /^\/v1\/tenants\/([^/]+)\/policy$/.exec(url.pathname);
+        const rateLimitMatch = /^\/v1\/tenants\/([^/]+)\/rate-limit\/check$/.exec(url.pathname);
+        if (!policyMatch && !rateLimitMatch) {
+          writeJson(res, 404, { error: "not_found" });
+          return;
+        }
+        const tenantId = decodeURIComponent((policyMatch ?? rateLimitMatch)?.[1] ?? "");
+        if (policyMatch && req.method === "GET") {
+          writeJson(res, 200, await store.getTenantPolicy(tenantId));
+          return;
+        }
+        if (rateLimitMatch && req.method === "POST") {
+          try {
+            const payload = await readJson(req) as { rateLimitRps?: number };
+            const result = await store.checkRateLimit(tenantId, payload.rateLimitRps);
+            if (!result.allow) {
+              void publishEvent("control_plane.rate_limit_denied", {
+                tenantId,
+                remainingTokens: result.remainingTokens,
+              });
+            }
+            writeJson(res, 200, result);
+          } catch {
+            writeJson(res, 400, { error: "invalid_json" });
+          }
+          return;
+        }
+        if (!policyMatch || req.method !== "PUT") {
+          writeJson(res, 405, { error: "method_not_allowed" });
+          return;
