@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import fs from "node:fs";
 import path from "node:path";
 import { Command } from "commander";
 import { runBench, runBenchCi } from "./bench";
@@ -68,12 +69,26 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function resolveCliVersion(): string {
+  const packageJsonPath = path.resolve(__dirname, "..", "package.json");
+  try {
+    const raw = fs.readFileSync(packageJsonPath, "utf8");
+    const parsed = JSON.parse(raw) as { version?: unknown };
+    if (typeof parsed.version === "string" && parsed.version.length > 0) {
+      return parsed.version;
+    }
+  } catch {
+    // fallback kept for environments with unusual packaging layout
+  }
+  return "0.0.0";
+}
+
 const program = new Command();
 
 program
   .name("velocity")
   .description("WebSocket multiplexer and batching layer")
-  .version("0.1.0");
+  .version(resolveCliVersion());
 
 program
   .command("proxy")
