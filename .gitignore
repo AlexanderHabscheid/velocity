@@ -42,3 +42,9 @@ sdk/python/build/
 # Editor / tooling
 .vscode/
 .idea/
+
+# OS / misc
+*.swp
+
+# Velocity artifacts
+.velocity/
