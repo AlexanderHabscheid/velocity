@@ -816,3 +816,10 @@ export function createProxySession(params: SessionParams): void {
   startHeartbeat();
   agentSocket.on("close", teardown);
   agentSocket.on("error", teardown);
+  targetSocket.on("close", teardown);
+  targetSocket.on("error", (err) => {
+    const reason = err instanceof Error ? err.message : String(err);
+    upstreamObserver?.onError?.(!upstreamOpened ? `upstream-open-failed:${reason}` : reason);
+    teardown();
+  });
+}
