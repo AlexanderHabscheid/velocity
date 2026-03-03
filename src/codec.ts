@@ -164,3 +164,25 @@ export class VelocityCodec {
     }
     if (!this.zstd?.compress) {
       return { buffer: Buffer.concat([Buffer.from([0]), data]), compressed: false };
+    }
+
+    const compressed = Buffer.from(await this.zstd.compress(data));
+    const gainRatio = (data.length - compressed.length) / data.length;
+    if (compressed.length >= data.length || gainRatio < this.zstdMinGainRatio) {
+      return { buffer: Buffer.concat([Buffer.from([0]), data]), compressed: false };
+    }
+
+    return {
+      buffer: Buffer.concat([Buffer.from([FLAG_COMPRESSED]), compressed]),
+      compressed: true,
+    };
+  }
+
+  private async maybeDecompress(data: Buffer): Promise<Buffer> {
+    if (!this.zstd?.decompress) {
+      throw new Error("received compressed frame but zstd is unavailable");
+    }
+
+    return Buffer.from(await this.zstd.decompress(data));
+  }
+}

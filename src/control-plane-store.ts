@@ -198,3 +198,21 @@ export class SqliteControlPlaneStore implements ControlPlaneStore {
     const sqlite = await import("node:sqlite");
     return new SqliteControlPlaneStore(dbPath, sqlite);
   }
+
+  async getTenantPolicy(tenantId: string): Promise<TenantPolicy> {
+    const row = this.db.prepare(`
+      SELECT tenant_id, enabled, rate_limit_rps, updated_at
+      FROM tenant_policies
+      WHERE tenant_id = ?
+    `).get(tenantId) as { tenant_id: string; enabled: number; rate_limit_rps: number; updated_at: string } | undefined;
+
+    if (!row) {
+      return defaultPolicy(tenantId);
+    }
+
+    return {
+      tenantId: row.tenant_id,
+      enabled: row.enabled !== 0,
+      rateLimitRps: row.rate_limit_rps,
+      updatedAt: row.updated_at,
+    };
