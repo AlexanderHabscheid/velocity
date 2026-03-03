@@ -118,3 +118,43 @@ export interface FrameRecord {
   toolRoundtripMs?: number;
   framesPerTurn?: number;
   note?: string;
+  signal?:
+    | "queue-overflow"
+    | "backpressure"
+    | "tenant-breaker-open"
+    | "session-rollback"
+    | "policy-denied"
+    | "rate-limit-denied"
+    | "auth-rejected"
+    | "authz-denied";
+}
+
+export interface TenantAggregateMetrics {
+  totalFramesRaw: number;
+  totalFramesSent: number;
+  totalBytesRaw: number;
+  totalBytesSent: number;
+  latencySamples: number;
+  latencyMsTotal: number;
+  loopTurnSamples: number;
+  loopTurnMsTotal: number;
+  toolRoundtripSamples: number;
+  toolRoundtripMsTotal: number;
+  framesPerTurnSamples: number;
+  framesPerTurnTotal: number;
+  queueDelaySamples: number;
+  queueDelayMsTotal: number;
+  queueOverflowEvents: number;
+  backpressureEvents: number;
+  tenantBreakerOpenEvents: number;
+  sessionRollbackEvents: number;
+  policyDeniedEvents: number;
+  rateLimitDeniedEvents: number;
+  authRejectedEvents: number;
+  authzDeniedEvents: number;
+}
+
+export interface AggregateMetrics {
+  totalFramesRaw: number;
+  totalFramesSent: number;
+  totalBytesRaw: number;
