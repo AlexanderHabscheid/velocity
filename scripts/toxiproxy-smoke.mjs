@@ -38,3 +38,18 @@ async function main() {
       type: 'latency',
       stream: 'downstream',
       attributes: { latency: 120, jitter: 20 },
+    }),
+  });
+
+  const toxics = await api(`/proxies/${proxyName}`);
+  if (!toxics || !Array.isArray(toxics?.toxics) || toxics.toxics.length === 0) {
+    throw new Error('expected toxics to be configured');
+  }
+
+  console.log('toxiproxy smoke passed');
+}
+
+main().catch((err) => {
+  console.error(err instanceof Error ? err.message : String(err));
+  process.exit(1);
+});

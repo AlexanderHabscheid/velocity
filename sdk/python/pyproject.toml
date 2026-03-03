@@ -20,3 +20,4 @@ velocity-control = "velocity_control_sdk.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
+include = ["velocity_control_sdk*"]
