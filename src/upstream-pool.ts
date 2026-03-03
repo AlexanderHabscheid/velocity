@@ -118,3 +118,43 @@ export class UpstreamPool {
     const state = this.states.get(url);
     if (!state) {
       return;
+    }
+    state.healthy = true;
+    state.lastSuccessAtMs = Date.now();
+    state.consecutiveFailures = 0;
+  }
+
+  recordFailure(url: string, reason: string): void {
+    const state = this.states.get(url);
+    if (!state) {
+      return;
+    }
+    state.healthy = false;
+    state.lastFailureAtMs = Date.now();
+    state.consecutiveFailures += 1;
+    if (state.consecutiveFailures >= this.options.ejectFailures) {
+      state.ejectedUntilMs = Date.now() + this.options.ejectMs;
+      this.logger.warn("velocity upstream target ejected", {
+        target: url,
+        reason,
+        ejectedUntilMs: state.ejectedUntilMs,
+        failures: state.consecutiveFailures,
+      });
+    }
+  }
+
+  snapshot(): Array<{
+    url: string;
+    activeConnections: number;
+    ewmaLatencyMs: number | null;
+    healthy: boolean;
+    ejectedUntilMs: number;
+    consecutiveFailures: number;
+  }> {
+    return [...this.states.values()].map((state) => ({
+      url: state.url,
+      activeConnections: state.activeConnections,
+      ewmaLatencyMs: state.ewmaLatencyMs,
+      healthy: state.healthy,
+      ejectedUntilMs: state.ejectedUntilMs,
+      consecutiveFailures: state.consecutiveFailures,
