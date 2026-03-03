@@ -1,0 +1,21 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: velocity-proxy
+  namespace: velocity
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: velocity-proxy
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: velocity-control-plane
+  namespace: velocity
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: velocity-control-plane

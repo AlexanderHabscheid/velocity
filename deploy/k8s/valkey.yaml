@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: velocity-valkey
+  namespace: velocity
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: velocity-valkey
+  template:
+    metadata:
+      labels:
+        app: velocity-valkey
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
