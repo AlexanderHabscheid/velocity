@@ -38,3 +38,5 @@ export function runCmdStreaming(cmd: string, args: string[], cwd = process.cwd()
 }
 
 export function resolveRepoPath(...parts: string[]): string {
+  return path.resolve(process.cwd(), ...parts);
+}

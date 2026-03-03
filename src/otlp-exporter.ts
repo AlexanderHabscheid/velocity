@@ -38,3 +38,41 @@ export function startOtlpExporter(
     inFlight = exportSnapshot().finally(() => {
       inFlight = null;
     });
+  };
+
+  const exportSnapshot = async (): Promise<void> => {
+    const metrics = store.load();
+    const attributes = [
+      { key: "velocity.frames_raw_total", value: { intValue: metrics.totalFramesRaw } },
+      { key: "velocity.frames_sent_total", value: { intValue: metrics.totalFramesSent } },
+      { key: "velocity.bytes_raw_total", value: { intValue: metrics.totalBytesRaw } },
+      { key: "velocity.bytes_sent_total", value: { intValue: metrics.totalBytesSent } },
+      { key: "velocity.latency_samples_total", value: { intValue: metrics.latencySamples } },
+      { key: "velocity.latency_total_ms", value: { doubleValue: metrics.latencyMsTotal } },
+      { key: "velocity.queue_overflow_events_total", value: { intValue: metrics.queueOverflowEvents } },
+      { key: "velocity.backpressure_events_total", value: { intValue: metrics.backpressureEvents } },
+      { key: "velocity.tenant_breaker_open_events_total", value: { intValue: metrics.tenantBreakerOpenEvents } },
+      { key: "velocity.session_rollback_events_total", value: { intValue: metrics.sessionRollbackEvents } },
+      { key: "velocity.policy_denied_events_total", value: { intValue: metrics.policyDeniedEvents } },
+      { key: "velocity.rate_limit_denied_events_total", value: { intValue: metrics.rateLimitDeniedEvents } },
+      { key: "velocity.auth_rejected_events_total", value: { intValue: metrics.authRejectedEvents } },
+      { key: "velocity.authz_denied_events_total", value: { intValue: metrics.authzDeniedEvents } },
+    ];
+
+    const body = {
+      resourceLogs: [
+        {
+          resource: {
+            attributes: [
+              {
+                key: "service.name",
+                value: { stringValue: serviceName },
+              },
+            ],
+          },
+          scopeLogs: [
+            {
+              scope: {
+                name: "velocity",
+              },
+              logRecords: [
