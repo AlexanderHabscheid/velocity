@@ -38,3 +38,4 @@ export function startMetricsExporter(store: MetricsStore, host: string, port: nu
         "# TYPE velocity_bytes_raw_total counter",
         `velocity_bytes_raw_total ${m.totalBytesRaw}`,
         "# TYPE velocity_bytes_sent_total counter",
+        `velocity_bytes_sent_total ${m.totalBytesSent}`,

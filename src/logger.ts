@@ -38,3 +38,14 @@ export function createLogger(format: LogFormat): Logger {
     if (level === "error" || level === "warn") {
       process.stderr.write(line);
     } else {
+      process.stdout.write(line);
+    }
+  };
+
+  return {
+    debug: (message, fields) => write("debug", message, fields),
+    info: (message, fields) => write("info", message, fields),
+    warn: (message, fields) => write("warn", message, fields),
+    error: (message, fields) => write("error", message, fields),
+  };
+}

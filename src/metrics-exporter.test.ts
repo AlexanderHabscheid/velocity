@@ -38,3 +38,31 @@ test("metrics exporter exposes latency histogram buckets", async () => {
     ts: new Date().toISOString(),
     sessionId: "s2",
     direction: "server->agent",
+    bytesRaw: 10,
+    bytesSent: 8,
+    batchedCount: 1,
+    compressed: false,
+    delta: false,
+    queueDelayMs: 0,
+    latencyMs: 120,
+  });
+  store.recordSignal("policy-denied");
+  store.recordSignal("auth-rejected");
+
+  const port = await getOpenPort();
+  const exporter = await startMetricsExporter(store, "127.0.0.1", port);
+  const resp = await fetch(`http://127.0.0.1:${port}/metrics`);
+  const body = await resp.text();
+
+  assert.match(body, /velocity_latency_ms_bucket\{le="10"\} 1/);
+  assert.match(body, /velocity_latency_ms_bucket\{le="250"\} 2/);
+  assert.match(body, /velocity_latency_ms_count 2/);
+  assert.match(body, /velocity_loop_turn_avg_ms /);
+  assert.match(body, /velocity_frames_per_turn_avg /);
+  assert.match(body, /velocity_queue_delay_avg_ms /);
+  assert.match(body, /velocity_policy_denied_events_total 1/);
+  assert.match(body, /velocity_auth_rejected_events_total 1/);
+
+  await exporter.close();
+  await store.close();
+});
