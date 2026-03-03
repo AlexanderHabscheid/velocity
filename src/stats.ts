@@ -59,3 +59,26 @@ function printAdvice(items: string[]): void {
 }
 
 function tenantFrameReduction(raw: number, sent: number): number {
+  return safeRatio(raw - sent, raw);
+}
+
+export function printStatsWithOptions(store: MetricsStore, options: PrintStatsOptions): void {
+  const m = store.load();
+  const byteSavings = m.totalBytesRaw - m.totalBytesSent;
+  const frameSavings = m.totalFramesRaw - m.totalFramesSent;
+  const avgLatency = m.latencySamples > 0 ? m.latencyMsTotal / m.latencySamples : 0;
+  const p95 = percentile(m.latencyMsP95Window, 0.95);
+  const avgLoopTurnMs = safeRatio(m.loopTurnMsTotal, m.loopTurnSamples);
+  const avgToolRoundtripMs = safeRatio(m.toolRoundtripMsTotal, m.toolRoundtripSamples);
+  const avgFramesPerTurn = safeRatio(m.framesPerTurnTotal, m.framesPerTurnSamples);
+  const avgQueueDelayMs = safeRatio(m.queueDelayMsTotal, m.queueDelaySamples);
+  const p95QueueDelayMs = percentile(m.queueDelayMsP95Window, 0.95);
+  const frameReductionRatio = safeRatio(frameSavings, m.totalFramesRaw);
+  const byteReductionRatio = safeRatio(byteSavings, m.totalBytesRaw);
+  const denialEvents =
+    m.policyDeniedEvents + m.rateLimitDeniedEvents + m.authRejectedEvents + m.authzDeniedEvents;
+  const safetyEvents =
+    m.queueOverflowEvents + m.backpressureEvents + m.tenantBreakerOpenEvents + m.sessionRollbackEvents;
+  const healthPenalty = denialEvents + safetyEvents;
+  const topTenants = Object.entries(m.perTenant ?? {})
+    .map(([tenantId, stats]) => ({

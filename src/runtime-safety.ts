@@ -52,3 +52,20 @@ export class SessionRollbackController {
 
   recordGuardBreach(): { rollback: boolean } {
     if (this.rolledBack) {
+      return { rollback: false };
+    }
+
+    const now = Date.now();
+    this.breaches.push(now);
+    this.breaches = this.breaches.filter((ts) => now - ts <= this.windowMs);
+    if (this.breaches.length >= this.threshold) {
+      this.rolledBack = true;
+      return { rollback: true };
+    }
+    return { rollback: false };
+  }
+
+  isRolledBack(): boolean {
+    return this.rolledBack;
+  }
+}
