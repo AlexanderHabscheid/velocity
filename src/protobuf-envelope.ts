@@ -393,3 +393,43 @@ function toKind(code: number): VelocityEnvelope["kind"] {
   if (code === 3) {
     return "delta";
   }
+  return "control";
+}
+
+function fromKind(kind: VelocityEnvelope["kind"]): number {
+  if (kind === "batch") {
+    return 1;
+  }
+  if (kind === "single") {
+    return 2;
+  }
+  if (kind === "delta") {
+    return 3;
+  }
+  return 4;
+}
+
+export function encodeVelocityEnvelopeProto(envelope: VelocityEnvelope): Buffer {
+  const parts: Buffer[] = [];
+  parts.push(writeVarintField(1, fromKind(envelope.kind)));
+  parts.push(writeStringField(2, envelope.id));
+  parts.push(writeVarintField(3, envelope.sentAt));
+  for (const frame of envelope.frames) {
+    parts.push(writeBytesField(4, frame));
+  }
+  if (envelope.source) {
+    parts.push(writeStringField(5, envelope.source));
+  }
+  if (envelope.control) {
+    parts.push(writeBytesField(6, encodeControl(envelope.control)));
+  }
+  if (envelope.deltaPatch) {
+    parts.push(writeBytesField(7, encodeDeltaPatch(envelope.deltaPatch)));
+  }
+  return Buffer.concat(parts);
+}
+
+export function decodeVelocityEnvelopeProto(data: Uint8Array): VelocityEnvelope | null {
+  const out: VelocityEnvelope = {
+    kind: "single",
+    id: "",
