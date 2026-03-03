@@ -161,3 +161,43 @@ export function startControlPlaneWithOptions(options: ControlPlaneOptions): Prom
         if (!policyMatch || req.method !== "PUT") {
           writeJson(res, 405, { error: "method_not_allowed" });
           return;
+        }
+        try {
+          const payload = await readJson(req) as Partial<TenantPolicy>;
+          const updated = await store.putTenantPolicy(tenantId, payload);
+          void publishEvent("control_plane.policy_updated", {
+            tenantId,
+            enabled: updated.enabled,
+            rateLimitRps: updated.rateLimitRps,
+          });
+          writeJson(res, 200, updated);
+        } catch {
+          writeJson(res, 400, { error: "invalid_json" });
+        }
+      });
+
+      server.once("error", reject);
+      server.listen(options.port, options.host, () => {
+        console.log(`velocity control-plane listening at http://${options.host}:${options.port} (store=${options.storeEngine})`);
+        resolve({
+          close: async () =>
+            new Promise<void>((closeResolve, closeReject) => {
+              server.close((err) => {
+                if (err) {
+                  closeReject(err);
+                  return;
+                }
+                Promise.resolve(store.close?.())
+                  .then(() => eventBus.close())
+                  .then(() => closeResolve())
+                  .catch(closeReject);
+              });
+            }),
+        });
+      });
+    });
+  });
+}
+
+async function startStore(options: ControlPlaneOptions): Promise<ControlPlaneStore> {
+  const baseStore: ControlPlaneStore = options.storeEngine === "sqlite"
