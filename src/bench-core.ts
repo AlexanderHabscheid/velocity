@@ -305,3 +305,43 @@ export async function runProfile(profile: BenchProfile, runSeed = 1): Promise<Be
     zstdMinBytes: 512,
     zstdMinGainRatio: 0.03,
     enableZstdDictionary: false,
+    zstdDictionaryMinBytes: 1024,
+    enableProtobuf: false,
+    enableDelta: false,
+    structuredDeltaTypes: [],
+    autoFallback: true,
+    enableNegotiation: true,
+    negotiationTimeoutMs: 25,
+    enablePassthroughMerge: true,
+    safeMode: false,
+    breakerThreshold: 3,
+    breakerWindowMs: 30000,
+    breakerCooldownMs: 60000,
+    rollbackBreachThreshold: 3,
+    rollbackWindowMs: 15000,
+    maxInboundQueue: 4096,
+    maxOutstandingBatches: 8192,
+    maxSocketBackpressureBytes: 4 * 1024 * 1024,
+    logFormat: "text",
+    otlpHttpEndpoint: undefined,
+    otlpIntervalMs: 10000,
+    otlpServiceName: "velocity-bench",
+    metricsHost: "127.0.0.1",
+    metricsPort: 0,
+    traceDir: stateDir,
+  });
+
+  let direct: TrialResult | null = null;
+  let proxied: TrialResult | null = null;
+  try {
+    await sleep(120);
+    direct = await runTrial(directUrl, profile);
+    await sleep(80);
+    proxied = await runTrial(proxyUrl, profile);
+  } finally {
+    await proxy.close();
+    await new Promise<void>((resolve, reject) => {
+      echoServer.close((err) => (err ? reject(err) : resolve()));
+    });
+  }
+
