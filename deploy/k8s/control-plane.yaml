@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: velocity-control-plane
+  namespace: velocity
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: velocity-control-plane
+  template:
+    metadata:
+      labels:
+        app: velocity-control-plane
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: control-plane
+          image: ghcr.io/ahabscheid/velocity:0.1.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+          args:
+            [
+              "control-plane",
+              "--host",
+              "0.0.0.0",
+              "--port",
+              "4200",
+              "--store-engine",
+              "json",
