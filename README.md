@@ -20,6 +20,12 @@ velocity doctor
 velocity bootstrap
 ```
 
+Node control-plane SDK from the same package:
+
+```ts
+import { VelocityControlClient } from "@velocityai/velocity/control-plane-sdk";
+```
+
 ## Core commands
 
 ```bash
@@ -226,8 +232,8 @@ This check verifies operation coverage across:
 
 ## SDK packaging
 
-- TypeScript SDK package: `sdk/typescript/package.json` (`@velocityai/control-plane-sdk`)
-- Python SDK package: `sdk/python/pyproject.toml` (`velocity-control-sdk`)
+- Node control-plane SDK (bundled in CLI package): `@velocityai/velocity/control-plane-sdk`
+- Python SDK package: `sdk/python/pyproject.toml` (`velocityai-cli`)
 - Python CLI entrypoint: `velocity-control`
 
 Build locally:
@@ -242,11 +248,11 @@ Build locally:
 Tagged releases (`v*`) trigger `.github/workflows/release.yml`:
 - verify gates (`npm run release:verify`)
 - publish CLI to npm
-- publish TypeScript SDK to npm
 - publish Python SDK to PyPI
 - publish container image to GHCR
 
 Go-live runbook: `docs/go-live-checklist.md`.
+First-team setup: `docs/first-15-minutes.md`.
 
 ## Deployment tiers
 
