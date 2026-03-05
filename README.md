@@ -3,6 +3,12 @@
 `velocity` is a TypeScript CLI proxy that sits between an agent and a WebSocket server to reduce frame count and byte overhead while guarding against latency regression.
 It is package-first and terminal-first: there is no built-in web dashboard UI.
 
+Velocity includes four shipped surfaces:
+- `velocity` CLI (proxy, canary, control-plane, stats, replay, bench tooling)
+- Control-plane HTTP API (`openapi/control-plane.yaml`)
+- TypeScript control-plane SDK (`@velocityai/control-plane-sdk`)
+- Python control-plane SDK + CLI (`velocityai-cli`, command: `velocity-control`)
+
 ## Quickstart (Package-first)
 
 ```bash
@@ -31,6 +37,7 @@ import { VelocityControlClient } from "@velocityai/velocity/control-plane-sdk";
 ```bash
 velocity proxy --target ws://localhost:4000
 velocity canary --target ws://localhost:4000
+velocity control-plane
 velocity doctor
 velocity bootstrap
 velocity stats
